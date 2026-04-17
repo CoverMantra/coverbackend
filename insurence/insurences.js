@@ -27,7 +27,6 @@ router.post("/veichle/:type",async (req,res)=>{
 
 })
 
-
 router.post("/life-insurence/:type",async (req,res)=>{
 
       const type = req.params.type;

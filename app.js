@@ -7,7 +7,7 @@ const insurence = require("./insurence/insurences");
 const moneyview = require("./PartnerRoutes/moneyview/moneyview");
 const fatakPay = require("./PartnerRoutes/fatakpay/fatakpay");
 const zype = require("./PartnerRoutes/zype/zype");
-
+const vivifiRoutes = require("./PartnerRoutes/vivifi/vivifi");
 const app = express();
 const PORT = process.env.PORT || 5001;
 
@@ -52,7 +52,7 @@ app.use("/api/insurence", insurence);
 app.use("/api/moneyview", moneyview);
 app.use("/api/fatakPay", fatakPay);
 app.use("/api/zype", zype);
-
+app.use("/api/vivifi", vivifiRoutes);
 connectDb().then(() => {
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);

@@ -5,14 +5,11 @@ const axios = require("axios");
 const { generateOTP } = require("../utils/otpstore");
 const { generateToken } = require("../utils/jwtgenerate");
 const lenderList = require("../lender/lenderList");
-const otpStorage = new Map();
+const Otp = require("../models/Otp");
 const Contact = require("../models/Contact");
 
 //update
 require('dotenv').config();
-
-
-
 
 function isValidPAN(pan) {
   const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
@@ -24,33 +21,9 @@ function isValidMobileNumber(number) {
   return mobileRegex.test(number);
 }
 
-const lenders = [
-  {
-    id: 1,
-    name: "ABC Finance",
-    interestRate: 10.5,
-    allowedPincodes: ["110001", "110002", "560001"],
-  },
-  {
-    id: 2,
-    name: "XYZ Bank",
-    interestRate: 11,
-    allowedPincodes: ["110001", "400001"],
-  },
-  {
-    id: 3,
-    name: "FastCash",
-    interestRate: 12,
-    allowedPincodes: ["122001", "560001"],
-  },
-];
-
 router.get("/", (req, res) => {
   res.send("hello alive");
 });
-
-
-
 
 router.post("/eligibility", (req, res) => {
   const { age, income, pincode } = req.body;
@@ -62,19 +35,20 @@ router.post("/eligibility", (req, res) => {
   if (age <= 18) {
     return res.json({ eligible: false, message: "Age must be greater than 18" });
   }
-  if (income < 15000) {
-    return res.json({ eligible: false, message: "Income must be at least 15000" });
-  }
 
-  // Filter lenders based on pincode
-  const eligibleLenders = lenders.filter((lender) =>
-    lender.allowedPincodes.includes(pincode)
-  );
+  // Filter lenders from lenderList based on age, income, and pincode
+  const eligibleLenders = lenderList.filter((lender) => {
+    const ageMatch = age >= lender.age;
+    const incomeMatch = income >= lender.minIncome;
+    const pincodeMatch = lender.pincodes.includes("*") || lender.pincodes.includes(pincode);
+    
+    return ageMatch && incomeMatch && pincodeMatch;
+  });
 
   if (eligibleLenders.length === 0) {
     return res.json({
       eligible: false,
-      message: "No lenders available for this pincode",
+      message: "No lenders available for your age, income, or pincode",
     });
   }
 
@@ -164,15 +138,20 @@ router.post("/send-otp", async (req, res) => {
 
   const otp = generateOTP();
 
-  // Store OTP with expiry
-  otpStorage.set(phone, {
-    otp,
-    expiresAt: Date.now() + 2 * 60 * 1000, // 2 minutes
-  });
-
-  console.log("Sending OTP to phone:", phone);
-
   try {
+    // Save OTP to database with expiry
+    await Otp.findOneAndUpdate(
+      { phone },
+      {
+        otp,
+        expiresAt: new Date(Date.now() + 2 * 60 * 1000), // 2 minutes
+        createdAt: new Date()
+      },
+      { upsert: true, new: true }
+    );
+
+    console.log("Sending OTP to phone:", phone);
+
     const smsCloudUrl = `https://app.smscloud.in/pushapi/sendbulkmsg?username=KESHVACREDIT&dest=${phone}&apikey=7lbTOubf0YBuTFtuCPmMB1AIclEzjQk8&signature=CMTRA&msgtype=PM&msgtxt=Dear customer, ${otp} is your login OTP. Valid for 5 minutes. Please do not share with anyone. Regards, CoverMantra&templateid=1707175922948829561`;
 
     const response = await axios.get(smsCloudUrl);
@@ -182,39 +161,47 @@ router.post("/send-otp", async (req, res) => {
 
     res.json({ message: "OTP sent successfully" });
   } catch (error) {
-    console.error(error);
+    console.error("Error sending OTP:", error);
     res.status(500).json({ message: "Failed to send OTP" });
   }
 });
 
 
-router.post("/verify-otp", (req, res) => {
+router.post("/verify-otp", async (req, res) => {
   const { phone, otp } = req.body;
 
   if (!phone || !otp) {
     return res.status(400).json({ message: "Phone and OTP are required" });
   }
 
-  const storedOtpData = otpStorage.get(phone);
+  try {
+    // Find OTP in database
+    const storedOtpData = await Otp.findOne({ phone });
 
-  if (!storedOtpData) {
-    return res.status(400).json({ message: "No OTP sent to this number" });
+    if (!storedOtpData) {
+      return res.status(400).json({ message: "No OTP sent to this number" });
+    }
+
+    // Check if OTP has expired
+    if (new Date() > storedOtpData.expiresAt) {
+      await Otp.deleteOne({ phone }); // Clean up expired OTP
+      return res.status(400).json({ message: "OTP has expired" });
+    }
+
+    // Check if OTP matches
+    if (otp !== storedOtpData.otp) {
+      return res.status(400).json({ message: "Invalid OTP" });
+    }
+
+    // Delete OTP after successful verification
+    await Otp.deleteOne({ phone });
+
+    const token = generateToken(phone);
+    return res.json({ message: "OTP verified successfully", phone, token });
+  } catch (error) {
+    console.error("Error verifying OTP:", error);
+    return res.status(500).json({ message: "Server error during OTP verification" });
   }
-
-  const { otp: storedOtp, expiresAt } = storedOtpData;
-
-  if (Date.now() > expiresAt) {
-    otpStorage.delete(phone);
-    return res.status(400).json({ message: "OTP has expired" });
-  }
-
-  if (otp !== storedOtp) {
-    return res.status(400).json({ message: "Invalid OTP" });
-  }
-
-  otpStorage.delete(phone);
-  const token = generateToken(phone);
-  return res.json({ message: "OTP verified successfully", phone, token });
 });
 
 router.post("/profile", async (req, res) => {

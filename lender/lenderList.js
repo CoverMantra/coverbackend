@@ -33,7 +33,14 @@ const lenderList = [
     pincodes: ["123042", "500001","125042","125001"], 
     minIncome: 16000,
     UTM:"https://web.fatakpay.com/authentication/login?utm_source=651_TT83W?utm_medium=" 
-  }
+  },
+  {
+    name: "VIVIFI",
+    age: 21,
+    pincodes: ["*"],
+    minIncome: 15000,
+    UTM: "https://online.flexsalary.com/CustomerLogin/Index?CampaignID=9192300#x"
+}
 ];
 
 module.exports = lenderList;
