@@ -18,7 +18,6 @@ const PORT = process.env.PORT || 5001;
           "https://covermantra.com",
           "https://www.covermantra.com",
           "covermantra.com",
-          "https://cbe-y7q8.onrender.com", // ✅ correct render URL
           "http://localhost:5000", // backend local
           "http://localhost:3001",
         ];
