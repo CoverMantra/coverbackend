@@ -1,6 +1,14 @@
 const express = require("express");
-const { User, DeleteRequest } = require("../models/Users.js")
+const { webusername, DeleteRequest } = require("../models/Users.js")
 const router = express.Router();
+const authMiddleware = require("../middlewares/authMiddleware");
+const rateLimit = require("express-rate-limit");
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { message: "Too many requests from this IP, please try again after 15 minutes" }
+});
 const axios = require("axios");
 const { generateOTP } = require("../utils/otpstore");
 const { generateToken } = require("../utils/jwtgenerate");
@@ -59,7 +67,7 @@ router.post("/eligibility", (req, res) => {
   });
 });
 
-router.post("/register", async (req, res) => {
+router.post("/register", authLimiter, async (req, res) => {
   const {
     name,
     phone,
@@ -99,11 +107,11 @@ router.post("/register", async (req, res) => {
   }
 
   try {
-    const existingUser = await User.findOne({ email });
+    const existingUser = await webusername.findOne({ $or: [{ email }, { phone }] });
     if (existingUser) {
-      return res.status(400).send("User already exists. Please sign in");
+      return res.status(400).send("User with this email or phone already exists. Please sign in.");
     }
-    const newUser = new User({
+    const newUser = new webusername({
       name,
       phone,
       pan,
@@ -119,15 +127,15 @@ router.post("/register", async (req, res) => {
     await newUser.save();
     return res
       .status(201)
-      .json({ message: "User registered successfully", user: newUser });
+      .json({ message: "webusername registered successfully", user: newUser });
   } catch (err) {
     return res
       .status(500)
       .json({ message: "Server error", error: err.message });
   }
 });
-router.post("/send-otp", async (req, res) => {
-  const { phone } = req.body;
+router.post("/send-otp", authLimiter, async (req, res) => {
+  const phone = req.body.phone;
 
   if (!phone)
     return res.status(400).json({ message: "Phone number is required" });
@@ -196,7 +204,7 @@ router.post("/verify-otp", async (req, res) => {
     // Delete OTP after successful verification
     await Otp.deleteOne({ phone });
 
-    const token = generateToken(phone);
+    const token = generateToken({ phone });
     return res.json({ message: "OTP verified successfully", phone, token });
   } catch (error) {
     console.error("Error verifying OTP:", error);
@@ -204,9 +212,9 @@ router.post("/verify-otp", async (req, res) => {
   }
 });
 
-router.post("/profile", async (req, res) => {
+router.post("/profile", authMiddleware, async (req, res) => {
   try {
-    const { phone } = req.body;
+    const phone = req.user.phone;
 
 
     if (!phone) {
@@ -216,20 +224,20 @@ router.post("/profile", async (req, res) => {
       });
     }
 
-    const getUser = await User.findOne({ phone });
+    const getUser = await webusername.findOne({ phone });
 
     // 4. Check if a user was found 
     if (!getUser) {
       return res.status(404).json({
         status: 404,
-        message: "User not found.",
+        message: "webusername not found.",
       });
     }
 
     // 5. Respond with the user data
     return res.status(200).json({
       status: 200,
-      message: "User profile retrieved successfully.",
+      message: "webusername profile retrieved successfully.",
       user: getUser, // Key should be 'user' or 'data', not 'message'
     });
   } catch (error) {
@@ -244,32 +252,33 @@ router.post("/profile", async (req, res) => {
 });
 
 
-router.post("/delete-profile", async (req, res) => {
+router.post("/delete-profile", authMiddleware, async (req, res) => {
   try {
-    const { phone, message, email } = req.body;
+    const phone = req.user.phone;
+    const { message, email } = req.body;
 
     if (!phone || !email || !message) {
       return res.status(400).json({ message: "Phone number is required" });
     }
 
-    const deleteUser = await User.findOne({ phone });
+    const deleteUser = await webusername.findOne({ phone });
 
     if (!deleteUser) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ message: "webusername not found" });
     }
 
     const deleteRequest = new DeleteRequest({
-      ...deleteUser._doc,
-      message: "User account deleted successfully",
-      deletedAt: new Date(),
+      phone: deleteUser.phone,
+      email: email,
+      message: message,
     });
 
     await deleteRequest.save();
 
-    await deleteRequest.save();
+    await webusername.deleteOne({ phone });
 
     return res.status(200).json({
-      message: "User deleted successfully and stored in DeleteRequest",
+      message: "webusername deleted successfully and stored in DeleteRequest",
       deletedUser: deleteUser,
     });
 
@@ -284,27 +293,39 @@ router.post("/delete-profile", async (req, res) => {
 
 
 
-router.put("/update-profile", async (req, res) => {
+router.put("/update-profile", authMiddleware, async (req, res) => {
   try {
-    const { phone } = req.body;
+    const phone = req.user.phone;
 
     if (!phone) {
       return res.status(400).json({ message: "Phone number is required" });
     }
 
-    const updatedUser = await User.findOneAndUpdate(
+    const allowedUpdates = ["name", "email", "city", "state", "gender", "employment", "income", "pincode", "dob", "pan"];
+    const updateData = {};
+    Object.keys(req.body).forEach(key => {
+        if(allowedUpdates.includes(key)) {
+            updateData[key] = req.body[key];
+        }
+    });
+
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ message: "No valid fields provided for update" });
+    }
+
+    const updatedUser = await webusername.findOneAndUpdate(
       { phone: phone },
-      { $set: req.body },
+      { $set: updateData },
       { new: true, runValidators: true },
     );
 
     if (!updatedUser) {
-      return res.status(404).json({ message: "User not found " });
+      return res.status(404).json({ message: "webusername not found " });
     }
 
     return res
       .status(200)
-      .json({ message: "User update sucessfully", updatedUser });
+      .json({ message: "webusername update sucessfully", updatedUser });
   } catch (error) {
     return res
       .status(500)
@@ -312,9 +333,9 @@ router.put("/update-profile", async (req, res) => {
   }
 });
 
-router.post("/filter-lenders", async (req, res) => {
+router.post("/filter-lenders", authMiddleware, async (req, res) => {
   try {
-    const { phone } = req.body;
+    const phone = req.user.phone;
 
     if (!phone) {
       return res.status(400).json({
@@ -324,12 +345,12 @@ router.post("/filter-lenders", async (req, res) => {
     }
 
     // Fetch user from DB
-    const getUser = await User.findOne({ phone });
+    const getUser = await webusername.findOne({ phone });
 
     if (!getUser) {
       return res.status(404).json({
         status: 404,
-        message: "User not found."
+        message: "webusername not found."
       });
     }
 
@@ -341,7 +362,7 @@ router.post("/filter-lenders", async (req, res) => {
     if (!dob || !userIncome || !pincode) {
       return res.status(400).json({
         status: 400,
-        message: "User must have DOB, Income & Pincode saved."
+        message: "webusername must have DOB, Income & Pincode saved."
       });
     }
 

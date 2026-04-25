@@ -1,6 +1,6 @@
 const router = require("express").Router();
 const axios = require("axios");
-const PartnerResponse = require("./PartnerResponse");
+const LenderResponse = require("../../models/LenderResponse");
 
 // ✅ Mask mobile function
 function maskMobile(mobile) {
@@ -114,12 +114,19 @@ router.post("/register", async (req, res) => {
       console.error("❌ PreApproval API failed:", apires);
     }
 
-    // ✅ Save partner response in DB (only apires like before)
+    // ✅ Save partner response in DB (Standardized Format)
     try {
-      const partnerRes = new PartnerResponse({
-        partnerName: "Zype",
-        mobile: lead.phone,
-        apiResponse: apires,
+      const today = new Date();
+      const dd = String(today.getDate()).padStart(2, '0');
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const yyyy = today.getFullYear();
+      const createdDate = `${dd}/${mm}/${yyyy}`;
+
+      const partnerRes = new LenderResponse({
+        name: lead.name,
+        mobile: String(lead.phone),
+        apiResponse: totalresponse, // Saving both dedupe and apires
+        createdDate: createdDate
       });
       await partnerRes.save();
     } catch (dbErr) {

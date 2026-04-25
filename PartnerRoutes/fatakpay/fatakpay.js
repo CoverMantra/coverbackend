@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const axios = require("axios");
-const FatakPayUser = require("./fatakpayuser");
+const LenderResponse = require("../../models/LenderResponse");
 require("dotenv").config();
 
 const domain = process.env.FATAKPAY_DOMAIN;
@@ -92,9 +92,17 @@ router.post("/register/Pl", async (req, res) => {
             { headers: { Authorization: `Token ${token}` } }
         );
 
-        const newUser = new FatakPayUser({
-            ...userData,
-            fatakpayResponse: apiFatakpay.data
+        const today = new Date();
+        const dd = String(today.getDate()).padStart(2, '0');
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const yyyy = today.getFullYear();
+        const createdDate = `${dd}/${mm}/${yyyy}`;
+
+        const newUser = new LenderResponse({
+            name: `${first_name} ${last_name}`.trim(),
+            mobile: String(mobile),
+            apiResponse: apiFatakpay.data,
+            createdDate: createdDate
         });
 
         // console.log(newUser)
@@ -176,9 +184,17 @@ router.post("/register/dcl", async (req, res) => {
             { headers: { Authorization: `Token ${token}` } }
         );
 
-        const newUser = new FatakPayUser({
-            ...userData,
-            fatakpayResponse: apiFatakpay.data
+        const today = new Date();
+        const dd = String(today.getDate()).padStart(2, '0');
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const yyyy = today.getFullYear();
+        const createdDate = `${dd}/${mm}/${yyyy}`;
+
+        const newUser = new LenderResponse({
+            name: `${first_name} ${last_name}`.trim(),
+            mobile: String(mobile),
+            apiResponse: apiFatakpay.data,
+            createdDate: createdDate
         });
 
         // console.log(newUser)

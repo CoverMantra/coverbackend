@@ -1,14 +1,14 @@
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
-// const JWT_SECRECT_KEY = process.env.JWT_SECRECT;
-const JWT_SECRECT_KEY = "Thiskeyforthetokengenerrate";
-// const TOKEN_EXPIRE = process.env.JWT_EXPIRES_TIME;
-const TOKEN_EXPIRE = "1d";
 
+// Pro Tip: Deployment ke waqt .env hi use karein
+const JWT_SECRECT_KEY = process.env.JWT_SECRECT || "Thiskeyforthetokengenerrate";
+const TOKEN_EXPIRE = process.env.JWT_EXPIRES_TIME || "1d";
+
+// FIXED: Removed extra curly braces around payload to keep it clean
 function generateToken(payload) {
-  return jwt.sign({ payload }, JWT_SECRECT_KEY, { expiresIn: TOKEN_EXPIRE });
+  return jwt.sign(payload, JWT_SECRECT_KEY, { expiresIn: TOKEN_EXPIRE });
 }
-//update situ 59
 
 function verifyToken(token) {
   try {
@@ -18,11 +18,12 @@ function verifyToken(token) {
   }
 }
 
+// FIXED: Corrected math (1000 instead of 100)
 function isTokenExpired(token) {
   try {
     const decode = jwt.decode(token);
     if (!decode || !decode.exp) return true;
-    return decode.exp * 100 < Date.now();
+    return decode.exp * 1000 < Date.now(); 
   } catch (error) {
     return true;
   }

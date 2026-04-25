@@ -1,5 +1,6 @@
 const router = require("express").Router();
 const axios = require("axios");
+const LenderResponse = require("../../models/LenderResponse");
 require("dotenv").config();
 
 const domain = process.env.MONEYVIEW_DOMAIN;
@@ -143,6 +144,31 @@ router.post("/register", async (req, res) => {
       });
     }
     
+    const totalResponse = {
+      leadSubmission: leadRes?.data || null,
+      offers: offersRes?.data || null,
+      journey: journeyRes?.data || null,
+      statusRes: statusRes?.data || null,
+    };
+
+    // ✅ Save partner response in DB (Standardized Format)
+    try {
+      const today = new Date();
+      const dd = String(today.getDate()).padStart(2, '0');
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const yyyy = today.getFullYear();
+      const createdDate = `${dd}/${mm}/${yyyy}`;
+
+      const partnerRes = new LenderResponse({
+        name: lead.name,
+        mobile: String(lead.phone),
+        apiResponse: totalResponse,
+        createdDate: createdDate
+      });
+      await partnerRes.save();
+    } catch (dbErr) {
+      console.error("❌ DB save failed:", dbErr.message);
+    }
 
     // ✅ Final response
     return res.json({

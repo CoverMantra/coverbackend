@@ -1,87 +1,34 @@
 const mongoose = require('mongoose');
 
-// **Note: You don't need to import 'string' and 'required' from 'joi' here.**
-// const { string, required } = require('joi'); 
-// Removed the unnecessary Joi import.
-
+// Main User Schema
 const userSchema = new mongoose.Schema({
-    name: {
-        type: String,
-        // Correction: 'require' should be 'required'
-        required: true
-    },
-    phone: {
-        type: String,
-        // Correction: 'require' should be 'required'
-        required: true
-    },
-    pan: {
-        type: String,
-        required: true
-    },
-    dob: {
-        type: String,
-        required: true
-    },
-    email: {
-        type: String,
-        // Correction: 'require' should be 'required'
-        required: true,
-        unique: true // Recommended: email should usually be unique
-    },
-    city: {
-        type: String,
-        required: true
-    },
-    state: {
-        type: String,
-        required: true
-    },
-    gender: {
-        type: String,
-        required: true
-    },
-    employment: {
-        type: String,
-        required: true
-    },
-    income: {
-        type: String,
-        required: true
-    },
-    pincode: {
-        type: String,
-        required: true
-    }
-});
+    name: { type: String, required: true },
+    phone: { type: String, required: true, index: true }, // Added Index here for Phase 1
+    pan: { type: String, required: true },
+    dob: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    city: { type: String, required: true },
+    state: { type: String, required: true },
+    gender: { type: String, required: true },
+    employment: { type: String, required: true },
+    income: { type: String, required: true },
+    pincode: { type: String, required: true }
+}, { timestamps: true });
 
-
-userSchema.set('timestamps', true);
-
+// Delete Request Schema (Recommended: Different Collection)
 const deleteRefSchema = new mongoose.Schema({ 
-    phone: {
-        type: String,
-        
-        required: true
-    },
-    email: {
-        type: String,
-        
-        required: true
-    },
-    message: {
-        type: String,
-        required: true
-    },
-});
+    phone: { type: String, required: true },
+    email: { type: String, required: true },
+    message: { type: String, required: true }
+}, { timestamps: true });
 
-deleteRefSchema.set('timestamps', true);
+// ✅ User model targeting your existing 'webuser' collection
+const webusername = mongoose.model('webusername', userSchema, 'webuser');
 
-const User = mongoose.model('User', userSchema);
-const DeleteRequest = mongoose.model('DeleteAcc', deleteRefSchema);
-
+// ✅ Alag collection for delete requests (taaki user data corrupt na ho)
+const DeleteRequest = mongoose.model('DeleteAcc', deleteRefSchema, 'account_deletions');
 
 module.exports = {
-    User,
+    webusername,
     DeleteRequest
 };

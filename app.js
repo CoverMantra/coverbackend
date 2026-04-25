@@ -18,8 +18,7 @@ const PORT = process.env.PORT || 5001;
           "https://covermantra.com",
           "https://www.covermantra.com",
           "covermantra.com",
-          "https://cbe-y7q8.onrender.com", // ✅ correct render URL
-          "http://localhost:5000", // backend local
+          "http://localhost:5000", 
           "http://localhost:3001",
         ];
         if (!origin) return callback(null, true);
@@ -58,3 +57,5 @@ connectDb().then(() => {
     console.log(`Server running on port ${PORT}`);
   });
 });
+
+// Trigger nodemon restart for .env changes

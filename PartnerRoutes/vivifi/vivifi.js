@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const axios = require("axios");
-const VivifiResponse = require("./VivifiResponse");
+const LenderResponse = require("../../models/LenderResponse");
 require("dotenv").config();
 
 
@@ -84,20 +84,18 @@ router.post("/register", async (req, res) => {
             }
         });
 
-        // 4. Save to DB
-        const newEntry = new VivifiResponse({
-            mobile: lead.phone,
-            firstName: lead.firstName,
-            lastName: lead.lastName,
-            email: lead.email,
-            pan: lead.pan.toUpperCase(),
-            dob: formattedDOB,
-            pincode: lead.pincode,
-            income: lead.income,
-            leadId: leadId,
-            redirectionUrl: redirectUrl,
-            fullResponse: responseData,
-            status: redirectUrl ? "Success" : (errorMessage ? "Rejected" : "Pending")
+        // 4. Save to DB (Standardized Format)
+        const today = new Date();
+        const dd = String(today.getDate()).padStart(2, '0');
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const yyyy = today.getFullYear();
+        const createdDate = `${dd}/${mm}/${yyyy}`;
+
+        const newEntry = new LenderResponse({
+            name: `${lead.firstName} ${lead.lastName}`.trim(),
+            mobile: String(lead.phone),
+            apiResponse: responseData,
+            createdDate: createdDate
         });
         await newEntry.save();
 
