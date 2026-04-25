@@ -367,5 +367,22 @@ This full-stack application demonstrates a complete fintech platform with:
 
 The architecture follows best practices with separation of concerns, proper error handling, and scalable design patterns. As you work on this project, focus on understanding the data flow and how frontend and backend communicate through APIs.
 
-Remember: Always validate inputs, handle errors gracefully, and keep security in mind!</content>
-<parameter name="filePath">d:\websiteCV\architecturefullstack.md
+Remember: Always validate inputs, handle errors gracefully, and keep security in mind!
+
+## Recent Architectural Upgrades (April 2026)
+
+### 1. Database & Schema Optimization
+- **Collection Segregation**: Migrated temporary models (`Otp`, `Contact`) to their own dedicated collections (`otps`, `contacts`) to prevent pollution of the core administrative `webuser` collection.
+- **Unified Lender Schema**: Implemented a centralized `LenderResponse.js` schema within the `webuser` collection. This replaces disparate schemas (`PartnerResponse`, `VivifiResponse`, `FatakPayUser`) and acts as a single source of truth for all partner API responses (MoneyView, Zype, FatakPay, Vivifi).
+- **Environment Targeting**: Hardened MongoDB connection strings to explicitly target the `CoverMantra` database with `authSource`, preventing accidental data leakage into default `test` databases.
+
+### 2. Security & Middleware Enhancements
+- **IDOR Protection**: Secured all user data endpoints (`/api/user/profile`, `/api/user/update-profile`) with a rigorous JWT `authMiddleware`. User identity is now strictly extracted from the decoded token (`req.user.phone`) rather than untrusted request body parameters.
+- **Rate Limiting**: Implemented `express-rate-limit` on OTP generation endpoints to mitigate SMS bombing and brute-force attacks.
+
+### 3. Frontend State & Navigation Architecture
+- **Global State Management**: Transitioned from standard React Context to **Zustand** (`useAuthStore`) for robust, persistent authentication state management across route changes.
+- **Centralized API Interceptors**: Implemented a global Axios instance (`lib/axios.ts`) that automatically intercepts requests and attaches the JWT Bearer token from cookies.
+- **Hard Navigation for State Synchronization**: Replaced soft `router.push()` with hard `window.location.href` reloads during critical auth events (like Logout and new user Registration) to guarantee pristine state wiping and synchronization with the `Navbar` component.
+- **Event-Driven UI Updates**: Integrated the AI Chatbot and Navbar with the `loginStatusChanged` window event to reflect real-time authentication state changes without requiring manual page refreshes.
+- **Hydration Fixes**: Applied `suppressHydrationWarning={true}` strategically across input forms to resolve React hydration mismatches caused by browser auto-fill extensions.
