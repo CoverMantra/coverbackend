@@ -19,6 +19,7 @@ const PORT = process.env.PORT || 5001;
           "https://www.covermantra.com",
           "covermantra.com",
           "http://localhost:5000", 
+          "http://localhost:5000", // backend local
           "http://localhost:3001",
         ];
         if (!origin) return callback(null, true);
