@@ -7,4 +7,4 @@ const LenderResponseSchema = new mongoose.Schema({
     createdDate: { type: String, required: true } // format: DD/MM/YYYY
 });
 
-module.exports = mongoose.model("LenderResponse", LenderResponseSchema, 'webuser');
+module.exports = mongoose.model("LenderResponse", LenderResponseSchema, "lender_responses");
