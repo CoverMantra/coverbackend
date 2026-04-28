@@ -51,7 +51,7 @@ router.post("/register", async (req, res) => {
                 Email: lead.email,
                 PhoneNumber: String(lead.phone),
                 DateOfBirth: formattedDOB, // Fixed: Format DD/MM/YYYY
-                Gender: lead.gender === 'male' ? 0 : 1,
+                Gender: lead.gender === 'male' ? 0 : lead.gender === 'female' ? 1 : 2,
                 PanNumber: String(lead.pan).toUpperCase()
             },
             CustomerAddressDetails: { 
