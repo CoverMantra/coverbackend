@@ -29,7 +29,7 @@ if (webusername.collection.name === LenderResponse.collection.name) {
           "https://www.covermantra.com",
           "covermantra.com",
           "http://localhost:5000", 
-          "http://localhost:5000", // backend local
+          "http://localhost:5001", // backend local
           "http://localhost:3001",
         ];
         if (!origin) return callback(null, true);
