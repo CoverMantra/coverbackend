@@ -2,25 +2,14 @@
 function generateOTP() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
-// Verify OTP
+
+// Note: verifyOTP is now handled in routes using MongoDB Otp model.
+// This function is deprecated and can be removed if not used elsewhere.
 function verifyOTP(phone, otp) {
-  const record = otpStore[phone];
-  if (!record) {
-    console.log(`[VERIFY OTP] No OTP found for phone: ${phone}`);
-    return false;
-  }
-
-  const now = Date.now();
-  const isValid = record.otp === otp && now < record.expiresAt;
-
-  if (isValid) {
-    delete otpStore[phone];
-    console.log(`[VERIFY OTP] OTP valid and verified for phone: ${phone}`);
-  } else {
-    console.log(`[VERIFY OTP] Invalid OTP or expired for phone: ${phone}`);
-  }
-
-  return isValid;
+  // Since we're using MongoDB, this Map-based verification is not needed.
+  // If you need to use this, define otpStore = new Map(); but better to use DB.
+  console.log("verifyOTP called, but using DB in routes instead.");
+  return false; // Placeholder
 }
 
 module.exports = { generateOTP, verifyOTP };

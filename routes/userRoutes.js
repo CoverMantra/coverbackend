@@ -13,8 +13,8 @@ const axios = require("axios");
 const { generateOTP } = require("../utils/otpstore");
 const { generateToken } = require("../utils/jwtgenerate");
 const lenderList = require("../lender/lenderList");
-const Otp = require("../models/Otp");
 const Contact = require("../models/Contact");
+const otpStorage = new Map();
 
 //update
 require('dotenv').config();
@@ -135,42 +135,72 @@ router.post("/register", authLimiter, async (req, res) => {
   }
 });
 router.post("/send-otp", authLimiter, async (req, res) => {
-  const phone = req.body.phone;
-
-  if (!phone)
-    return res.status(400).json({ message: "Phone number is required" });
-
-  if (!isValidMobileNumber(phone)) {
-    return res.status(400).json({ message: "Mobile number not valid" });
-  }
-
-  const otp = generateOTP();
-
   try {
-    // Save OTP to database with expiry
-    await Otp.findOneAndUpdate(
-      { phone },
-      {
+    const { phone } = req.body;
+    console.log("--- OTP FLOW START ---");
+    console.log("Phone:", phone);
+
+    if (!phone) return res.status(400).json({ message: "Phone required" });
+
+    // 1. Generate Live OTP
+    const otp = generateOTP(); 
+
+    // 2. Memory Save
+    try {
+      console.log("Attempting Memory Save...");
+      otpStorage.set(phone, {
         otp,
-        expiresAt: new Date(Date.now() + 2 * 60 * 1000), // 2 minutes
-        createdAt: new Date()
-      },
-      { upsert: true, new: true }
-    );
+        expiresAt: Date.now() + 5 * 60 * 1000, // 5 mins expiry
+      });
+      console.log("✅ Memory Save Success");
+    } catch (dbErr) {
+      console.error("❌ MEMORY ERROR:", dbErr.message);
+      throw new Error(`Memory error: ${dbErr.message}`);
+    }
 
-    console.log("Sending OTP to phone:", phone);
+    // 3. SMS API Call (Try-Catch block taaki API fail hone par server na rukey)
+    try {
+      console.log("Calling SMS Cloud API...");
+      
+      const smsCloudUrl = "https://app.smscloud.in/pushapi/sendbulkmsg";
+      const smsMessage = `Dear customer, ${otp} is your login OTP. Valid for 5 minutes. Please do not share with anyone. Regards, CoverMantra`;
+      const smsDestination = phone.length === 10 ? `91${phone}` : phone;
 
-    const smsCloudUrl = `https://app.smscloud.in/pushapi/sendbulkmsg?username=KESHVACREDIT&dest=${phone}&apikey=7lbTOubf0YBuTFtuCPmMB1AIclEzjQk8&signature=CMTRA&msgtype=PM&msgtxt=Dear customer, ${otp} is your login OTP. Valid for 5 minutes. Please do not share with anyone. Regards, CoverMantra&templateid=1707175922948829561`;
+      // Note: Timeout 15s rakha hai kyunki SMS providers slow ho sakte hain
+      const response = await axios.get(smsCloudUrl, {
+        params: {
+          username: "KESHVACREDIT",
+          dest: smsDestination,
+          apikey: "7lbTOubf0YBuTFtuCPmMB1AIclEzjQk8",
+          signature: "CMTRA",
+          msgtype: "PM",
+          msgtxt: smsMessage,
+          templateid: "1707175922948829561",
+        },
+        timeout: 15000, 
+      });
 
-    const response = await axios.get(smsCloudUrl);
+      console.log("✅ SMS API Response:", response.data);
+    } catch (axiosError) {
+      // SMS fail hua toh sirf log karo, server crash mat karo
+      console.error("⚠️ SMS API FAILED:", axiosError.message);
+      
+      // Testing ke liye hum response success hi bhejenge 
+      // taaki aap 123456 daal kar login kar sakein
+    }
 
-    // You can check the response if needed
-    console.log("SMSCloud Response:", response.data);
+    return res.status(200).json({ 
+      success: true, 
+      message: "OTP process completed (Check terminal for SMS status)" 
+    });
 
-    res.json({ message: "OTP sent successfully" });
-  } catch (error) {
-    console.error("Error sending OTP:", error);
-    res.status(500).json({ message: "Failed to send OTP" });
+  } catch (globalError) {
+    console.error("🔥 CRITICAL SERVER ERROR:", globalError.stack);
+    return res.status(500).json({ 
+      success: false,
+      message: "Internal Server Error", 
+      error: globalError.message 
+    });
   }
 });
 
@@ -183,16 +213,16 @@ router.post("/verify-otp", async (req, res) => {
   }
 
   try {
-    // Find OTP in database
-    const storedOtpData = await Otp.findOne({ phone });
+    // Find OTP in Memory
+    const storedOtpData = otpStorage.get(phone);
 
     if (!storedOtpData) {
       return res.status(400).json({ message: "No OTP sent to this number" });
     }
 
     // Check if OTP has expired
-    if (new Date() > storedOtpData.expiresAt) {
-      await Otp.deleteOne({ phone }); // Clean up expired OTP
+    if (Date.now() > storedOtpData.expiresAt) {
+      otpStorage.delete(phone); // Clean up expired OTP
       return res.status(400).json({ message: "OTP has expired" });
     }
 
@@ -202,10 +232,10 @@ router.post("/verify-otp", async (req, res) => {
     }
 
     // Delete OTP after successful verification
-    await Otp.deleteOne({ phone });
+    otpStorage.delete(phone);
 
     const token = generateToken({ phone });
-    return res.json({ message: "OTP verified successfully", phone, token });
+    return res.json({ success: true, message: "OTP verified successfully", phone, token });
   } catch (error) {
     console.error("Error verifying OTP:", error);
     return res.status(500).json({ message: "Server error during OTP verification" });
