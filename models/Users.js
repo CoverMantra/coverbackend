@@ -12,7 +12,12 @@ const userSchema = new mongoose.Schema({
     gender: { type: String, required: true },
     employment: { type: String, required: true },
     income: { type: String, required: true },
-    pincode: { type: String, required: true }
+    pincode: { type: String, required: true },
+    lenderResponses: [{
+        lenderName: { type: String },
+        apiResponse: { type: mongoose.Schema.Types.Mixed },
+        createdDate: { type: String }
+    }]
 }, { timestamps: true });
 
 // Delete Request Schema (Recommended: Different Collection)

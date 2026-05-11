@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const axios = require("axios");
 const LenderResponse = require("../../models/LenderResponse");
+const { webusername } = require("../../models/Users");
 require("dotenv").config();
 
 
@@ -12,9 +13,25 @@ const getVivifiToken = async () => {
             Password: process.env.VIVIFI_PASSWORD
         });
         
-        // Vivifi returns an array: [{ Type: "AccessToken", Message: "...", ... }]
-        const tokenData = response.data.find(item => item.Type === "AccessToken");
-        return tokenData ? tokenData.Message : null;
+        const data = response.data;
+        console.log("Vivifi Auth API Raw Response:", typeof data === 'string' ? data.substring(0, 100) : data);
+        
+        // Check if response is an array
+        if (Array.isArray(data)) {
+            const tokenData = data.find(item => item.Type === "AccessToken");
+            return tokenData ? tokenData.Message : null;
+        } 
+        // Check if response is an object
+        else if (data && typeof data === 'object') {
+            if (data.Type === "AccessToken") return data.Message;
+            if (data.Message) return data.Message; // Some APIs just return { Message: "token" }
+            if (data.AccessToken) return data.AccessToken;
+            if (data.access_token) return data.access_token;
+            
+            // If it's returning a different structure, log it
+            return null;
+        }
+        return null;
     } catch (error) {
         console.error("Vivifi Auth Error:", error.message);
         return null;
@@ -69,7 +86,8 @@ router.post("/register", async (req, res) => {
         };
 
         const apiRes = await axios.post(process.env.VIVIFI_LEAD_URL, vivifiPayload, {
-            headers: { 'AccessToken': token, 'Content-Type': 'application/json' }
+            headers: { 'AccessToken': token, 'Content-Type': 'application/json' },
+            validateStatus: () => true // Prevent axios from throwing error on 4xx/5xx so we can save it to DB
         });
 
         // 3. Robust Response Parsing
@@ -91,13 +109,34 @@ router.post("/register", async (req, res) => {
         const yyyy = today.getFullYear();
         const createdDate = `${dd}/${mm}/${yyyy}`;
 
-        const newEntry = new LenderResponse({
-            name: `${lead.firstName} ${lead.lastName}`.trim(),
-            mobile: String(lead.phone),
-            apiResponse: responseData,
-            createdDate: createdDate
-        });
-        await newEntry.save();
+        await LenderResponse.findOneAndUpdate(
+            { mobile: String(lead.phone) },
+            { 
+                $setOnInsert: { name: `${lead.firstName} ${lead.lastName}`.trim() },
+                $push: { 
+                    responses: {
+                        lenderName: "Vivifi",
+                        apiResponse: responseData,
+                        createdDate: createdDate
+                    } 
+                }
+            },
+            { upsert: true, new: true }
+        );
+
+        // ✅ Also push to the main webuser collection
+        await webusername.findOneAndUpdate(
+            { phone: String(lead.phone) },
+            {
+                $push: {
+                    lenderResponses: {
+                        lenderName: "Vivifi",
+                        apiResponse: responseData,
+                        createdDate: createdDate
+                    }
+                }
+            }
+        );
 
         if (redirectUrl) {
             return res.status(200).json({ success: true, redirectUrl, leadId });

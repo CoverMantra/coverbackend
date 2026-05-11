@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const axios = require("axios");
 const LenderResponse = require("../../models/LenderResponse");
+const { webusername } = require("../../models/Users");
 require("dotenv").config();
 
 const domain = process.env.MONEYVIEW_DOMAIN;
@@ -159,13 +160,34 @@ router.post("/register", async (req, res) => {
       const yyyy = today.getFullYear();
       const createdDate = `${dd}/${mm}/${yyyy}`;
 
-      const partnerRes = new LenderResponse({
-        name: lead.name,
-        mobile: String(lead.phone),
-        apiResponse: totalResponse,
-        createdDate: createdDate
-      });
-      await partnerRes.save();
+      await LenderResponse.findOneAndUpdate(
+          { mobile: String(lead.phone) },
+          { 
+              $setOnInsert: { name: lead.name },
+              $push: { 
+                  responses: {
+                      lenderName: "MoneyView",
+                      apiResponse: totalResponse,
+                      createdDate: createdDate
+                  } 
+              }
+          },
+          { upsert: true, new: true }
+      );
+
+      // ✅ Also push to the main webuser collection
+      await webusername.findOneAndUpdate(
+          { phone: String(lead.phone) },
+          {
+              $push: {
+                  lenderResponses: {
+                      lenderName: "MoneyView",
+                      apiResponse: totalResponse,
+                      createdDate: createdDate
+                  }
+              }
+          }
+      );
     } catch (dbErr) {
       console.error("❌ DB save failed:", dbErr.message);
     }

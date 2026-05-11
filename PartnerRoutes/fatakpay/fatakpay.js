@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const axios = require("axios");
 const LenderResponse = require("../../models/LenderResponse");
+const { webusername } = require("../../models/Users");
 require("dotenv").config();
 
 const domain = process.env.FATAKPAY_DOMAIN;
@@ -98,16 +99,34 @@ router.post("/register/Pl", async (req, res) => {
         const yyyy = today.getFullYear();
         const createdDate = `${dd}/${mm}/${yyyy}`;
 
-        const newUser = new LenderResponse({
-            name: `${first_name} ${last_name}`.trim(),
-            mobile: String(mobile),
-            apiResponse: apiFatakpay.data,
-            createdDate: createdDate
-        });
+        await LenderResponse.findOneAndUpdate(
+            { mobile: String(mobile) },
+            { 
+                $setOnInsert: { name: `${first_name} ${last_name}`.trim() },
+                $push: { 
+                    responses: {
+                        lenderName: "FatakPay PL",
+                        apiResponse: apiFatakpay.data,
+                        createdDate: createdDate
+                    } 
+                }
+            },
+            { upsert: true, new: true }
+        );
 
-        // console.log(newUser)
-         
-        await newUser.save();
+        // ✅ Also push to the main webuser collection
+        await webusername.findOneAndUpdate(
+            { phone: String(mobile) },
+            {
+                $push: {
+                    lenderResponses: {
+                        lenderName: "FatakPay PL",
+                        apiResponse: apiFatakpay.data,
+                        createdDate: createdDate
+                    }
+                }
+            }
+        );
 
         return res.status(200).json({
             status: apiFatakpay.status,
@@ -190,16 +209,34 @@ router.post("/register/dcl", async (req, res) => {
         const yyyy = today.getFullYear();
         const createdDate = `${dd}/${mm}/${yyyy}`;
 
-        const newUser = new LenderResponse({
-            name: `${first_name} ${last_name}`.trim(),
-            mobile: String(mobile),
-            apiResponse: apiFatakpay.data,
-            createdDate: createdDate
-        });
+        await LenderResponse.findOneAndUpdate(
+            { mobile: String(mobile) },
+            { 
+                $setOnInsert: { name: `${first_name} ${last_name}`.trim() },
+                $push: { 
+                    responses: {
+                        lenderName: "FatakPay DCL",
+                        apiResponse: apiFatakpay.data,
+                        createdDate: createdDate
+                    } 
+                }
+            },
+            { upsert: true, new: true }
+        );
 
-        // console.log(newUser)
-         
-        await newUser.save();
+        // ✅ Also push to the main webuser collection
+        await webusername.findOneAndUpdate(
+            { phone: String(mobile) },
+            {
+                $push: {
+                    lenderResponses: {
+                        lenderName: "FatakPay DCL",
+                        apiResponse: apiFatakpay.data,
+                        createdDate: createdDate
+                    }
+                }
+            }
+        );
 
         return res.status(200).json({
             status: apiFatakpay.status,

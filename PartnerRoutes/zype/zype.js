@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const axios = require("axios");
 const LenderResponse = require("../../models/LenderResponse");
+const { webusername } = require("../../models/Users");
 
 // ✅ Mask mobile function
 function maskMobile(mobile) {
@@ -122,13 +123,34 @@ router.post("/register", async (req, res) => {
       const yyyy = today.getFullYear();
       const createdDate = `${dd}/${mm}/${yyyy}`;
 
-      const partnerRes = new LenderResponse({
-        name: lead.name,
-        mobile: String(lead.phone),
-        apiResponse: totalresponse, // Saving both dedupe and apires
-        createdDate: createdDate
-      });
-      await partnerRes.save();
+      await LenderResponse.findOneAndUpdate(
+          { mobile: String(lead.phone) },
+          { 
+              $setOnInsert: { name: lead.name },
+              $push: { 
+                  responses: {
+                      lenderName: "Zype",
+                      apiResponse: totalresponse, // Saving both dedupe and apires
+                      createdDate: createdDate
+                  } 
+              }
+          },
+          { upsert: true, new: true }
+      );
+
+      // ✅ Also push to the main webuser collection
+      await webusername.findOneAndUpdate(
+          { phone: String(lead.phone) },
+          {
+              $push: {
+                  lenderResponses: {
+                      lenderName: "Zype",
+                      apiResponse: totalresponse,
+                      createdDate: createdDate
+                  }
+              }
+          }
+      );
     } catch (dbErr) {
       console.error("❌ DB save failed:", dbErr.message);
     }
