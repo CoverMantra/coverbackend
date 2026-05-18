@@ -17,7 +17,8 @@ const userSchema = new mongoose.Schema({
         lenderName: { type: String },
         apiResponse: { type: mongoose.Schema.Types.Mixed },
         createdDate: { type: String }
-    }]
+    }],
+    role: { type: String, enum: ['user', 'admin'], default: 'user' }
 }, { timestamps: true });
 
 // Delete Request Schema (Recommended: Different Collection)

@@ -1,0 +1,34 @@
+[
+  {
+    "_id": "v1",
+    "name": "VIVIFI",
+    "logo": "https://www.vivifin.com/images/vivifi-logo.png",
+    "age": 21,
+    "minIncome": 15000,
+    "priority": 1
+  },
+  {
+    "_id": "m1",
+    "name": "MoneyView",
+    "logo": "https://moneyview.in/images/mv-green-logo-v3Compressed.svg",
+    "age": 20,
+    "minIncome": 20000,
+    "priority": 2
+  },
+  {
+    "_id": "f1",
+    "name": "FATAKPAY PL",
+    "logo": "https://www.fdplfinance.com/assets/images/logo/Logo.svg",
+    "age": 20,
+    "minIncome": 16000,
+    "priority": 3
+  },
+  {
+    "_id": "z1",
+    "name": "Zype",
+    "logo": "https://www.getzype.com/wp-content/uploads/2024/09/Zype_svg_black.svg",
+    "age": 20,
+    "minIncome": 18000,
+    "priority": 4
+  }
+]

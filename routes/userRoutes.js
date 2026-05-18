@@ -13,6 +13,7 @@ const axios = require("axios");
 const { generateOTP } = require("../utils/otpstore");
 const { generateToken } = require("../utils/jwtgenerate");
 const lenderList = require("../lender/lenderList");
+const Lender = require("../models/Lender");
 const Contact = require("../models/Contact");
 const otpStorage = new Map();
 
@@ -33,7 +34,7 @@ router.get("/", (req, res) => {
   res.send("hello alive");
 });
 
-router.post("/eligibility", (req, res) => {
+router.post("/eligibility", async (req, res) => {
   const { age, income, pincode } = req.body;
 
   if (!age || !income || !pincode) {
@@ -44,8 +45,19 @@ router.post("/eligibility", (req, res) => {
     return res.json({ eligible: false, message: "Age must be greater than 18" });
   }
 
-  // Filter lenders from lenderList based on age, income, and pincode
-  const eligibleLenders = lenderList.filter((lender) => {
+  // Fetch lenders from DB, fallback to static list if DB fails (e.g. permission error)
+  let activeLenders = lenderList;
+  try {
+    const dbLenders = await Lender.find().sort({ priority: 1 });
+    if (dbLenders && dbLenders.length > 0) {
+      activeLenders = dbLenders;
+    }
+  } catch (dbError) {
+    console.error("MongoDB Lender fetch failed, falling back to static list:", dbError.message);
+  }
+
+  // Filter lenders based on age, income, and pincode
+  const eligibleLenders = activeLenders.filter((lender) => {
     const ageMatch = age >= lender.age;
     const incomeMatch = income >= lender.minIncome;
     const pincodeMatch = lender.pincodes.includes("*") || lender.pincodes.includes(pincode);
@@ -401,8 +413,19 @@ router.post("/filter-lenders", authMiddleware, async (req, res) => {
     const ageDiff = Date.now() - birthDate.getTime();
     const userAge = new Date(ageDiff).getUTCFullYear() - 1970;
 
+    // Fetch lenders from DB, fallback to static list if DB fails
+    let activeLenders = lenderList;
+    try {
+      const dbLenders = await Lender.find().sort({ priority: 1 });
+      if (dbLenders && dbLenders.length > 0) {
+        activeLenders = dbLenders;
+      }
+    } catch (dbError) {
+      console.error("MongoDB Lender fetch failed, falling back to static list:", dbError.message);
+    }
+
     // Filter lenders
-    const filtered = lenderList.filter((lender) => {
+    const filtered = activeLenders.filter((lender) => {
       const lenderAge = Number(lender.age);
       const pincodesArr = Array.isArray(lender.pincodes) ? lender.pincodes : [];
 

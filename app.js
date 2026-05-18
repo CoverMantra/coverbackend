@@ -40,7 +40,7 @@ if (webusername.collection.name === LenderResponse.collection.name) {
         }
       },
       methods: ["GET", "POST", "PUT", "DELETE"],
-      allowedHeaders: ["Content-Type", "Authorization"],
+      allowedHeaders: ["Content-Type", "Authorization", "x-admin-secret"],
     }),
   );
 
@@ -63,6 +63,8 @@ app.use("/api/moneyview", moneyview);
 app.use("/api/fatakPay", fatakPay);
 app.use("/api/zype", zype);
 app.use("/api/vivifi", vivifiRoutes);
+const lenderRoutes = require("./routes/lenderRoutes");
+app.use("/api/lenders", lenderRoutes);
 connectDb().then(() => {
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
