@@ -1,38 +1,118 @@
-# User Profile Dashboard Implementation Plan
+﻿# CoverMantra Detailed Implementation Roadmap
 
-This plan outlines the creation of a secure, modern profile dashboard where users can view their details after successfully authenticating via OTP.
+**Last Updated:** 20 May 2026
 
-## Overview
-Currently, the application allows users to register and verify their phone numbers via OTP, but lacks a dedicated page where users can view their stored personal details (PAN, Income, Employment, etc.). I will create a highly polished `/profile` page using Next.js and Tailwind CSS.
+## Purpose
+Provide an executable project roadmap for modernizing CoverMantra into a Go-backed loan aggregator with a production-ready frontend.
 
-## Open Questions
-> [!NOTE]
-> 1. Should the user be allowed to **edit** their profile from this page, or should this initial version just be **read-only**? 
-> 2. Do you have a specific icon or graphic preference for the profile header (e.g. an avatar vs an abstract gradient)? If not, I will default to a premium abstract design.
+## Milestone 1: Discovery and Code Audit
+- Inventory existing backend files and frontend routes
+- Identify the current API surface and partner integrations
+- Confirm critical pages and user journeys
+- Document missing assets or route gaps
 
-## Proposed Changes
+### Deliverables
+- Updated architecture docs
+- API contract list
+- Migration decision log
+- Dependency inventory
 
-### Frontend Components
+## Milestone 2: Backend Migration Strategy
+### Architecture
+- `cmd/api/main.go` — server bootstrap
+- `internal/handlers/*` — HTTP handlers
+- `internal/service/*` — business logic
+- `internal/store/*` — database repository layer
+- `internal/model/*` — shared domain types
+- `pkg/external/*` — lender adapter packages
 
-#### [NEW] [profile/page.tsx](file:///d:/websiteCV/coverfrontend/src/app/profile/page.tsx)
-- Create a new Next.js route for the profile dashboard.
-- Integrate Zustand's `useAuthStore` to ensure the user is logged in before rendering. If the user is unauthenticated, redirect them to the home page or prompt them to log in.
-- Use `fetchUserData` from the centralized Axios instance (`utils.tsx`) to pull the secure payload from the `POST /api/user/profile` backend endpoint.
-- **UI Design**: Apply the "Anti-Gravity" premium design language:
-  - Deep Navy background (`#08101E`) with vibrant Saffron (`#FF7819`) accents and glassmorphism cards (`backdrop-blur`).
-  - Use `framer-motion` for smooth entrance animations (staggered card loading).
-  - Use `lucide-react` icons (User, Phone, MapPin, Briefcase, IndianRupee) to visually separate sections (Personal Details, Professional Details, Address).
+### Technology
+- Go 1.23 or later
+- `chi` router
+- `sqlx` for SQL access
+- `golang-migrate` for schema management
+- `zap` structured logging
+- OpenTelemetry integration
+- Postgres database
+- Redis caching
 
-#### [MODIFY] [Navbar.tsx](file:///d:/websiteCV/coverfrontend/src/app/Components/Navbar.tsx)
-- Ensure the Navbar correctly links to `/profile` when the user is logged in instead of just showing "Logged In" or doing nothing.
+### First-pass Features
+- User registration and login
+- OTP verification
+- User profile CRUD
+- Lender metadata and eligibility
+- Loan search and comparison
+- Partner API orchestration
+- Admin lender management
 
-## Verification Plan
+## Milestone 3: Frontend Readiness
+### Current Frontend State
+- Next.js App Router project in `coverfrontend`
+- Major pages: Home, Personal Loans, Insurance, Dashboard, Contact
+- Existing UI uses Context API and cookies for auth
 
-### Automated Tests
-- Build the Next.js frontend (`npm run build`) to ensure the new page complies with TypeScript and has no hydration mismatches.
+### Improvement Areas
+- Consolidate API layer in `src/app/APIs/utils.tsx`
+- Replace direct cookie checks with a single auth state service
+- Improve responsive table layouts for loan comparison
+- Add `loading.tsx` and `error.tsx` pages for better UX
+- Add a user profile page with secure data fetch
 
-### Manual Verification
-- Log in using an OTP.
-- Navigate to `/profile`.
-- Verify that the page loads beautifully and accurately displays the user's database records.
-- Verify that accessing `/profile` while logged out safely redirects or shows an error.
+### Frontend Migration Options
+1. **Maintain Next.js frontend** and consume Go backend
+2. **Go WASM frontend** using `vugu` or `TinyGo` for single-language implementation
+3. **Hybrid**: keep web UI in React/Next.js, migrate core logic to Go services
+
+### Recommended Path
+- Start with **option 1** for fastest delivery
+- Keep current frontend while backend migrates
+- Later evaluate Go-based frontend if a single-language stack is required
+
+## Milestone 4: Integration and Testing
+### Integration Tasks
+- Build backend API mocks for frontend development
+- Wire the current UI to new Go endpoints
+- Maintain the same request/response contracts where possible
+- Add API versioning if the contract changes
+
+### Test Strategy
+- Unit tests for backend services and repository logic
+- Integration tests against a test database
+- Frontend smoke tests for login, dashboard, and loan search
+- API contract tests for partner adapters
+- Optional E2E tests with Cypress or Playwright
+
+## Milestone 5: Deployment and Operations
+### Local Development
+- Docker Compose file with backend, frontend, Postgres, Redis
+- `make dev` or `npm run dev` to launch full stack
+- Seed data for lenders and test users
+
+### CI/CD
+- GitHub Actions workflow to:
+  - build backend
+  - run backend tests
+  - build frontend
+  - run frontend lint/tests
+  - build Docker images
+
+### Production
+- Containerize backend and frontend
+- Deploy to cloud with Kubernetes or managed containers
+- Use managed Postgres and Redis
+- Add observability and alerting
+
+## Risk Mitigation
+- Preserve current Node/Next implementation until Go backend is stable
+- Use feature toggles for new API routes
+- Keep partner integration logic isolated from core user flows
+- Add logging and metrics early
+
+## Team Alignment
+- Assign backend owner for Go migration
+- Assign frontend owner for API transition
+- Sync weekly on blockers and API contract changes
+- Use docs and architecture files to keep everyone aligned
+
+## Summary
+This detailed roadmap is the latest update for CoverMantra’s modernization initiative. It covers discovery, engineering, testing, deployment, and risk management to make the platform robust, scalable, and production-ready.

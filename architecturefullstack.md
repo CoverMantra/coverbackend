@@ -1,398 +1,104 @@
-# Full Stack Architecture Documentation for CoverMantra Website
-
-## Introduction
-
-Hello , Developers Welcome to the CoverMantra project. This is a full-stack web application that helps users apply for loans and buy insurance. As a professional full-stack developer, I'll explain how  this entire system works step by step, from the backend to the frontend, and how they interact. We'll cover the architecture, technologies, data flow, and key components.
-
-Think of this as a fintech platform where users can:
-- Check loan eligibility
-- Register and verify via OTP
-- Apply for loans through partner lenders (MoneyView, FatakPay, Zype)
-- Buy various insurance policies
-- Calculate EMIs and premiums
-
-## Project Structure Overview
-
-The project is organized into two main folders:
-- `coverbackend/` - Node.js/Express API server
-- `coverfrontend/` - Next.js React application
-
-Let's dive deep into each part.
-
-## Backend Architecture (coverbackend/)
-
-### Technology Stack
-- **Runtime**: Node.js
-- **Framework**: Express.js
-- **Database**: MongoDB with Mongoose ODM
-- **Authentication**: JWT (JSON Web Tokens)
-- **Validation**: Joi
-- **HTTP Client**: Axios for external API calls
-- **Environment**: dotenv for configuration
-
-### Entry Point: app.js
-
-The `app.js` file is the heart of our backend application. Here's what it does:
-
-1. **Environment Setup**: Loads environment variables from `.env` file
-2. **Database Connection**: Calls `connectDb()` to establish MongoDB connection
-3. **CORS Configuration**: Allows requests from specific domains (production and localhost)
-4. **Middleware**: Enables JSON parsing with `express.json()`
-5. **Route Registration**: Mounts all API routes under `/api/*`
-6. **Server Start**: Starts the server on port 5001 (or from env)
-
-```javascript
-// Key routes mounted:
-app.use("/api/user", userRoutes);           // User management
-app.use("/api/insurence", insurence);       // Insurance requests
-app.use("/api/moneyview", moneyview);       // MoneyView lender integration
-app.use("/api/fatakPay", fatakPay);         // FatakPay lender integration
-app.use("/api/zype", zype);                 // Zype lender integration
-app.use("/api/vivifi", vivifiRoutes);       // Vivifi integration
-```
-
-### Database Layer: config/db.js
-
-Simple but crucial - connects to MongoDB using Mongoose:
-
-```javascript
-const connectDb = async () => {
-  try {
-    const conn = await mongoose.connect(process.env.MONGO_URL);
-    console.log(`Mongo connected: ${conn.connection.host}`);
-  } catch (e) {
-    console.error("Database connection error:", e.message);
-    process.exit(1); // Exit if DB fails
-  }
-};
-```
-
-### Data Models (models/)
-
-We have several Mongoose schemas:
-
-1. **Users.js**: Stores user personal information
-   - name, phone, pan, dob, email, city, state, gender, employment, income, pincode
-   - Also has DeleteRequest schema for account deletion requests
-
-2. **Otp.js**: Temporary OTP storage (though currently using in-memory)
-
-3. **Contact.js**: Contact form submissions
-
-4. **ramfinmodel.js**: Likely for RAM Financial data
-
-5. **VivifiResponse.js**: Stores responses from Vivifi partner
-
-### User Management Routes (routes/userRoutes.js)
-
-This is the core user-facing API. Key endpoints:
-
-#### POST /api/user/eligibility
-- Input: age, income, pincode
-- Validates user meets basic criteria (age > 18)
-- Filters lenders from `lenderList.js` based on:
-  - Age >= lender's minimum age
-  - Income >= lender's minimum income
-  - Pincode matches lender's service areas
-- Returns eligible lenders list
-
-#### POST /api/user/register
-- Creates new user account
-- Validates all required fields (name, phone, pan, etc.)
-- Validates PAN format and mobile number
-- Saves to MongoDB Users collection
-
-#### POST /api/user/send-otp
-- Generates 6-digit OTP
-- Sends via SMS API (external service)
-- Stores OTP temporarily with expiry
-
-#### POST /api/user/verify-otp
-- Verifies OTP matches stored value
-- Issues JWT token for authentication
-- Returns token for frontend to store
-
-#### POST /api/user/profile
-- Fetches user data by phone number
-- Requires JWT authentication
-
-### Partner Integrations (PartnerRoutes/)
-
-These handle integrations with external lender APIs:
-
-#### MoneyView Integration
-- **POST /api/moneyview/register**
-- Authenticates with MoneyView API using username/password
-- Validates PAN format
-- Creates lead with user data
-- Fetches loan offers and journey URL
-- Returns combined response
-
-#### FatakPay Integration
-- Similar flow but for FatakPay lender
-- Has separate endpoints for PL (Personal Loan) and DCL (Digital Credit Line)
-
-#### Zype Integration
-- Another lender partner
-- Handles lead creation and response
-
-#### Vivifi Integration
-- Insurance-focused partner
-- Stores responses in VivifiResponse model
-
-### Insurance Routes (insurence/)
-
-Handles different insurance types:
-- Vehicle insurance (car, bike)
-- Life insurance
-- Travel insurance
-- Home insurance
-- Health insurance
-
-Currently validates fields but doesn't store - just returns success.
-
-### Utility Functions (utils/)
-
-1. **jwtgenerate.js**: Creates JWT tokens for user sessions
-2. **otpstore.js**: Manages OTP generation and storage
-
-### Lender Configuration (lender/lenderList.js)
-
-Static data defining available lenders with:
-- Name, UTM tracking
-- Minimum age and income requirements
-- Serviceable pincodes
-- API endpoints
-
-## Frontend Architecture (coverfrontend/)
-
-### Technology Stack
-- **Framework**: Next.js 16 with App Router
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **UI Library**: Material-UI (MUI)
-- **Animations**: Framer Motion, Lottie, AOS
-- **HTTP Client**: Axios
-- **State Management**: React Context API
-- **Routing**: Next.js App Router (file-based)
-
-### App Structure
-
-#### Root Layout (layout.tsx)
-- Server component (no "use client")
-- Sets up fonts (Geist Sans/Mono)
-- Loads global CSS and AOS styles
-- Defines metadata for SEO
-- Wraps children in ClientLayout
-
-#### Client Layout (clientlayout.tsx)
-- Client component with "use client"
-- Provides ModalProvider context
-- Renders Navbar, children, GlobalModal, ChatBot, Footer
-
-### Routing System (App Router)
-
-Pages are organized under `src/app/`:
-- `page.tsx` - Home page
-- `about/page.tsx` - About page
-- `contact/page.tsx` - Contact page
-- `personal-loans/page.tsx` - Loan application
-- `insurance/` - Insurance pages
-- `dashboard/page.tsx` - User dashboard
-
-### Component Architecture
-
-#### Layout Components
-- **Navbar**: Navigation with login/logout
-- **Footer**: Site footer
-- **GlobalModal**: Reusable modal component
-- **ChatBot**: Interactive chatbot
-
-#### Page Components
-- **Body**: Main home page content assembler
-- **HeroSection**: Landing hero with swiper carousel
-- **LoanInfo**: Loan product information
-- **HowItWorks**: Process explanation
-- **EmiCalculator**: Interactive EMI calculator
-- **TestimonialSlider**: Customer testimonials
-- **Trust**: Trust indicators
-- **WhyChooseUs**: Value proposition
-- **Security**: Security features
-- **DownloadSection**: App download CTA
-
-#### Feature Components
-- **LoginModal**: User authentication
-- **VivifiLeadForm**: Insurance lead form
-- **Achievement**: Success metrics display
-
-### State Management
-
-Uses React Context API:
-- **ModalProvider**: Manages modal states (login, etc.)
-- Stores in `context/modelcontext.tsx`
-
-### Data Flow & API Integration
-
-#### API Configuration (APIs/utils.tsx)
-- Base URL: https://www.covermantra.com/api
-- Axios instance with interceptors
-- Handles authentication headers
-
-#### User Journey Flow
-
-1. **Eligibility Check**:
-   - User enters age, income, pincode
-   - Frontend calls `/api/user/eligibility`
-   - Backend filters eligible lenders
-   - Returns lender list
-
-2. **Registration**:
-   - User fills registration form
-   - Frontend validates locally
-   - Calls `/api/user/register`
-   - Backend validates and saves user
-
-3. **OTP Verification**:
-   - User enters phone
-   - Frontend calls `/api/user/send-otp`
-   - SMS sent via external API
-   - User enters OTP
-   - Frontend calls `/api/user/verify-otp`
-   - Backend validates and returns JWT
-
-4. **Loan Application**:
-   - Authenticated user applies
-   - Frontend calls partner API (e.g., `/api/moneyview/register`)
-   - Backend forwards to lender API
-   - Returns lender's response (offers, redirect URL)
-
-5. **Insurance Purchase**:
-   - Similar flow through insurance routes
-   - May integrate with Vivifi or other providers
-
-### Authentication Flow
-
-- Uses JWT tokens stored in cookies
-- `js-cookie` library for client-side cookie management
-- Protected routes check for `co_token` and `co_phone` cookies
-- Redirects to login if not authenticated
-
-### Animations & UI
-
-- **Lottie**: JSON-based animations (stored in `animations/`)
-- **Framer Motion**: Page transitions and micro-interactions
-- **AOS**: Scroll-triggered animations
-- **Swiper**: Image carousels
-- **Material-UI**: Consistent component library
-
-## Data Flow Architecture
-
-```
-User Browser → Next.js Frontend → Express Backend → MongoDB
-     ↓              ↓              ↓              ↓
-   React UI → API Calls (Axios) → Route Handlers → Mongoose Models
-     ↓              ↓              ↓              ↓
-  UI Updates ← Response Data ← Business Logic ← Database Queries
-```
-
-### Detailed Request Flow Example
-
-1. User clicks "Apply for Loan"
-2. Frontend checks authentication cookies
-3. If not logged in, shows LoginModal
-4. User registers → OTP verification → JWT issued
-5. Authenticated user fills loan form
-6. Frontend calls `/api/moneyview/register`
-7. Backend validates user data
-8. Backend calls MoneyView API with auth token
-9. MoneyView returns loan offers
-10. Backend saves response and returns to frontend
-11. Frontend redirects user to lender's application URL
-
-## Security Considerations
-
-- JWT authentication with expiration
-- CORS restricted to allowed domains
-- Input validation on both frontend and backend
-- PAN and mobile number format validation
-- Environment variables for sensitive data
-- HTTPS in production
-
-## Deployment & Environment
-
-- **Backend**: Deployed on Render (cbe-y7q8.onrender.com)
-- **Frontend**: Next.js static export or server
-- **Database**: MongoDB Atlas
-- **Environment Variables**: Separate for dev/prod
-
-## Key Business Logic
-
-### Lender Eligibility Algorithm
-```javascript
-const eligibleLenders = lenderList.filter((lender) => {
-  const ageMatch = age >= lender.age;
-  const incomeMatch = income >= lender.minIncome;
-  const pincodeMatch = lender.pincodes.includes("*") || 
-                      lender.pincodes.includes(pincode);
-  return ageMatch && incomeMatch && pincodeMatch;
-});
-```
-
-### Partner API Integration Pattern
-1. Authenticate with partner
-2. Validate user data
-3. Create lead
-4. Get offers/response
-5. Return formatted response
-
-## Areas for Improvement
-
-1. **Error Handling**: More comprehensive error responses
-2. **Testing**: Add unit and integration tests
-3. **Caching**: Implement Redis for OTP storage
-4. **Logging**: Add structured logging
-5. **API Documentation**: Swagger/OpenAPI specs
-6. **Database Indexing**: Optimize MongoDB queries
-7. **Frontend State**: Consider Zustand or Redux for complex state
-8. **Type Safety**: More TypeScript interfaces for API responses
+﻿# CoverMantra Fullstack Architecture
+
+**Last Updated:** 20 May 2026
+
+## Project Vision
+CoverMantra is a loan aggregator and insurance advisory platform. The fullstack product should provide a polished, responsive web experience while aggregating loan offers from partner lenders in real time.
+
+## Current Setup
+- `coverbackend/` — Node.js + Express API server with MongoDB
+- `coverfrontend/` — Next.js 16 React web application
+
+## Target Fullstack Architecture
+- **Backend:** Go service for API, aggregation, auth, and lender adapters
+- **Frontend:** Go-based UI option or modern JS UI with clear migration path
+- **Data Store:** PostgreSQL for transactional data; Redis for caching
+- **Infrastructure:** Docker + Kubernetes / Docker Compose for local dev
+- **CI/CD:** GitHub Actions builds and deploys backend and frontend
+
+## Fullstack Layers
+1. **Client Layer**
+   - Responsive UI across desktop, tablet, and mobile
+   - Home page, loan comparison, application forms, dashboard, user profile
+   - Mobile-first design with accessible tables and cards
+
+2. **API Layer**
+   - Authentication and user profile routes
+   - Loan search and aggregator endpoints
+   - Partner integration triggers
+   - Admin management APIs
+
+3. **Domain Layer**
+   - Business rules for eligibility, scoring, normalization
+   - Loan request orchestration
+   - Offer ranking and comparison
+
+4. **Persistence Layer**
+   - User, lender, loan request, offer, OTP
+   - Audit logging and event history
+   - Partner response storage
+
+5. **Infrastructure Layer**
+   - Network, reverse proxy, logs, metrics
+   - Cache and queue systems
+   - Secure secret management
+
+## Key Data Flow
+1. User enters loan details or requests eligibility
+2. Frontend sends request to backend API
+3. Backend validates input and loads lender eligibility
+4. Backend sends parallel requests to partner lender adapters
+5. Responses are normalized and ranked
+6. Aggregated results returned to frontend
+7. User selects offer and continues application
+
+## Frontend Architecture
+- **Current stack:** Next.js, Tailwind CSS, React Context
+- **Responsive UI:** breakpoints for mobile/tablet/desktop
+- **Components:** Navbar, Hero, OfferTable, LoginModal, Dashboard, ChatBot, Footer
+- **API client:** Axios wrapper with centralized endpoints
+- **Authentication:** OTP flow with cookies and JWT
+
+## Backend Architecture
+- **Current stack:** Express, MongoDB, Mongoose, Axios
+- **Proposed stack:** Go, `chi`, `sqlx`, `golang-migrate`, `zap`, OpenTelemetry
+- **Important modules:** `app.js`, `routes/userRoutes.js`, `PartnerRoutes/*`
+
+## Migration Strategy
+- Keep current repo structure until new Go backend is ready
+- Build new backend alongside old one in `coverbackend/`
+- Migrate feature-by-feature: auth, lenders, aggregation, admin
+- Keep frontend API contracts stable during migration
+- Use API gateway or versioned routes if needed
+
+## UI/UX Requirements
+- Loan aggregator homepage with hero search
+- Loan comparison tables that adapt to mobile
+- Lender detail pages with rates and fees
+- User dashboard with profile and history
+- Admin panel for lender data and metrics
+- Notifications and error handling in frontend
+
+## Security & Compliance
+- OTP security and rate limiting
+- JWT authentication with refresh tokens
+- Secure storage of user PII
+- HTTPS, CORS, input validation, CSRF mitigation
+
+## Operations & Monitoring
+- Prometheus metrics and Grafana dashboards
+- Alerts for errors, latency, and resource usage
+- Health checks and readiness probes
+- Log aggregation and request tracing
+
+## Implementation Roadmap
+1. Audit current code and API contracts
+2. Design target Go backend schema and routes
+3. Build new backend skeleton and basic auth
+4. Migrate lender integrations one by one
+5. Update frontend to call the new backend
+6. Test end-to-end and deploy locally
+7. Harden security and observability
 
 ## Conclusion
-
-This full-stack application demonstrates a complete fintech platform with:
-- Secure user authentication
-- External API integrations
-- Modern React frontend
-- Scalable Node.js backend
-- MongoDB data persistence
-
-The architecture follows best practices with separation of concerns, proper error handling, and scalable design patterns. As you work on this project, focus on understanding the data flow and how frontend and backend communicate through APIs.
-
-Remember: Always validate inputs, handle errors gracefully, and keep security in mind!
-
-## Recent Architectural Upgrades (April 2026)
-
-### 1. Database & Schema Optimization
-- **Collection Segregation**: Migrated temporary models (`Otp`, `Contact`) to their own dedicated collections (`otps`, `contacts`) to prevent pollution of the core administrative `webuser` collection.
-- **Unified Lender Schema**: Implemented a centralized `LenderResponse.js` schema within the `webuser` collection. This replaces disparate schemas (`PartnerResponse`, `VivifiResponse`, `FatakPayUser`) and acts as a single source of truth for all partner API responses (MoneyView, Zype, FatakPay, Vivifi).
-- **Environment Targeting**: Hardened MongoDB connection strings to explicitly target the `CoverMantra` database with `authSource`, preventing accidental data leakage into default `test` databases.
-
-### 2. Security & Middleware Enhancements
-- **IDOR Protection**: Secured all user data endpoints (`/api/user/profile`, `/api/user/update-profile`) with a rigorous JWT `authMiddleware`. User identity is now strictly extracted from the decoded token (`req.user.phone`) rather than untrusted request body parameters.
-- **Rate Limiting**: Implemented `express-rate-limit` on OTP generation endpoints to mitigate SMS bombing and brute-force attacks.
-
-### 3. Frontend State & Navigation Architecture
-- **Global State Management**: Transitioned from standard React Context to **Zustand** (`useAuthStore`) for robust, persistent authentication state management across route changes.
-- **Centralized API Interceptors**: Implemented a global Axios instance (`lib/axios.ts`) that automatically intercepts requests and attaches the JWT Bearer token from cookies.
-- **Hard Navigation for State Synchronization**: Replaced soft `router.push()` with hard `window.location.href` reloads during critical auth events (like Logout and new user Registration) to guarantee pristine state wiping and synchronization with the `Navbar` component.
-- **Event-Driven UI Updates**: Integrated the AI Chatbot and Navbar with the `loginStatusChanged` window event to reflect real-time authentication state changes without requiring manual page refreshes.
-- **Hydration Fixes**: Applied `suppressHydrationWarning={true}` strategically across input forms to resolve React hydration mismatches caused by browser auto-fill extensions.
-
-## Recent Architectural Upgrades (May 2026)
-
-### 1. Backend: OTP Storage Strategy
-- **In-Memory OTP Management**: Modified the `/api/user/send-otp` route to switch from MongoDB-based OTP storage to a volatile, in-memory `Map` storage mechanism. This architectural shift elegantly bypasses restricted collection permissions (Unauthorized errors) in the production database while seamlessly maintaining existing OTP generation, expiration, and validation capabilities.
-
-### 2. Frontend: UI/UX & Branding Standardization
-- **Global Branding Components**: Injected the consistent "Mantra Strip" branding element across all internal pages (About, Personal Loans, Smart Access, Contact) to unify the platform's visual identity. Integrated the official company logo as the site-wide favicon.
-- **Mobile-First Accessibility**: Overhauled the `HeroSection` layout to prioritize mobile-first accessibility, ensuring primary call-to-action buttons remain immediately visible above the fold on smaller viewports.
-- **Enhanced Hydration Resiliency**: Expanded the strategic application of `suppressHydrationWarning={true}` to the `HeroSection` and various interactive elements to specifically mitigate server/client mismatches caused by third-party browser extensions (e.g., unexpected DOM attribute injections like `fdprocessedid`).
+The updated fullstack architecture is now aligned with CoverMantra’s next product phase: a modern lending aggregator with a Go backend, responsive frontend, secure authentication, and production-ready infrastructure.
