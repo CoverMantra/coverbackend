@@ -61,7 +61,7 @@ router.post("/eligibility", async (req, res) => {
     const ageMatch = age >= lender.age;
     const incomeMatch = income >= lender.minIncome;
     const pincodeMatch = lender.pincodes.includes("*") || lender.pincodes.includes(pincode);
-    
+
     return ageMatch && incomeMatch && pincodeMatch;
   });
 
@@ -155,7 +155,7 @@ router.post("/send-otp", authLimiter, async (req, res) => {
     if (!phone) return res.status(400).json({ message: "Phone required" });
 
     // 1. Generate Live OTP
-    const otp = generateOTP(); 
+    const otp = generateOTP();
 
     // 2. Memory Save
     try {
@@ -173,7 +173,7 @@ router.post("/send-otp", authLimiter, async (req, res) => {
     // 3. SMS API Call (Try-Catch block taaki API fail hone par server na rukey)
     try {
       console.log("Calling SMS Cloud API...");
-      
+
       const smsCloudUrl = "https://app.smscloud.in/pushapi/sendbulkmsg";
       const smsMessage = `Dear customer, ${otp} is your login OTP. Valid for 5 minutes. Please do not share with anyone. Regards, CoverMantra`;
       const smsDestination = phone.length === 10 ? `91${phone}` : phone;
@@ -189,29 +189,29 @@ router.post("/send-otp", authLimiter, async (req, res) => {
           msgtxt: smsMessage,
           templateid: "1707175922948829561",
         },
-        timeout: 15000, 
+        timeout: 15000,
       });
 
       console.log("✅ SMS API Response:", response.data);
     } catch (axiosError) {
       // SMS fail hua toh sirf log karo, server crash mat karo
       console.error("⚠️ SMS API FAILED:", axiosError.message);
-      
+
       // Testing ke liye hum response success hi bhejenge 
       // taaki aap 123456 daal kar login kar sakein
     }
 
-    return res.status(200).json({ 
-      success: true, 
-      message: "OTP process completed (Check terminal for SMS status)" 
+    return res.status(200).json({
+      success: true,
+      message: "OTP process completed (Check terminal for SMS status)"
     });
 
   } catch (globalError) {
     console.error("🔥 CRITICAL SERVER ERROR:", globalError.stack);
-    return res.status(500).json({ 
+    return res.status(500).json({
       success: false,
-      message: "Internal Server Error", 
-      error: globalError.message 
+      message: "Internal Server Error",
+      error: globalError.message
     });
   }
 });
@@ -346,9 +346,9 @@ router.put("/update-profile", authMiddleware, async (req, res) => {
     const allowedUpdates = ["name", "email", "city", "state", "gender", "employment", "income", "pincode", "dob", "pan"];
     const updateData = {};
     Object.keys(req.body).forEach(key => {
-        if(allowedUpdates.includes(key)) {
-            updateData[key] = req.body[key];
-        }
+      if (allowedUpdates.includes(key)) {
+        updateData[key] = req.body[key];
+      }
     });
 
     if (Object.keys(updateData).length === 0) {
