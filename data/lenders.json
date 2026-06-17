@@ -1,19 +1,78 @@
 [
   {
     "_id": "f1",
-    "name": "FDPL Finance",
+    "name": "FatakPay Personal Loans",
     "logo": "https://www.fdplfinance.com/assets/images/logo/FatakLoans.svg",
     "age": 20,
     "minIncome": 16000,
-    "priority": 1
+    "pincodes": ["123042", "500001", "125042", "125001"],
+    "UTM": "https://web.fatakpay.com/authentication/login?utm_source=651_TT83W?utm_medium=",
+    "priority": 1,
+    "approval": "Good",
+    "loanAmount": "Up to ₹2,00,000",
+    "interestRate": "Starting from 12% to 35.95% per month",
+    "processingFee": "Starting from 2.5% of the approved loan amount",
+    "support": "24/7 customer support",
+    "ratings": 4.0,
+    "features": [
+      "Quick disbursement",
+      "Paperless process",
+      "Low processing fee",
+      "Instant approval",
+      "No hidden charges",
+      "24/7 customer support"
+    ],
+    "applyLink": "/LenderAPI/fatakPay"
+  },
+  {
+    "_id": "f2",
+    "name": "FatakPay Short Term Loans",
+    "logo": "https://www.fdplfinance.com/assets/images/logo/FatakLoans.svg",
+    "age": 20,
+    "minIncome": 16000,
+    "pincodes": ["123042", "500001", "125042", "125001"],
+    "UTM": "https://web.fatakpay.com/authentication/login?utm_source=651_TT83W?utm_medium=",
+    "priority": 2,
+    "approval": "Good",
+    "loanAmount": "Up to ₹2,00,000",
+    "interestRate": "Starting from 12% to 35.95% per month",
+    "processingFee": "Starting from 2.5% of the approved loan amount",
+    "support": "24/7 customer support",
+    "ratings": 4.0,
+    "features": [
+      "Quick disbursement",
+      "Paperless process",
+      "Low processing fee",
+      "Instant approval",
+      "No hidden charges",
+      "24/7 customer support"
+    ],
+    "applyLink": "/LenderAPI/fatakPaydcl"
   },
   {
     "_id": "v1",
-    "name": "VIVIFI",
+    "name": "FlexSalary (Vivifi)",
     "logo": "https://www.vivifin.com/images/vivifi-logo.png",
     "age": 21,
     "minIncome": 15000,
-    "priority": 2
+    "pincodes": ["*"],
+    "UTM": "https://online.flexsalary.com/CustomerLogin/Index?CampaignID=9192300#x",
+    "priority": 3,
+    "approval": "Good",
+    "loanAmount": "Up to ₹3,00,000",
+    "interestRate": "Starting from 1.5% per month",
+    "processingFee": "Starting from 2% of the approved loan amount",
+    "support": "24/7 customer support",
+    "ratings": 4.2,
+    "features": [
+      "Credit Line Facility",
+      "Instant Disbursal",
+      "Flexible Repayment",
+      "No Fixed EMI",
+      "Minimal Documentation",
+      "24/7 support"
+    ],
+    "applyLink": "/LenderAPI/vivifi"
   },
   {
     "_id": "m1",
@@ -21,7 +80,22 @@
     "logo": "https://moneyview.in/images/mv-green-logo-v3Compressed.svg",
     "age": 20,
     "minIncome": 20000,
-    "priority": 3
+    "pincodes": ["125042", "125043", "125042", "125001"],
+    "UTM": "https://moneyview.in/personal-loan?utm_source=covermantra",
+    "priority": 4,
+    "approval": "Good",
+    "loanAmount": "Up to ₹5,00,000",
+    "interestRate": "Starting from 1.33% per month",
+    "processingFee": "Starting from 2% of the approved loan amount",
+    "support": "24/7 customer support",
+    "ratings": 4.5,
+    "features": [
+      "Direct bank transfer",
+      "Paperless process",
+      "Minimal documentation",
+      "Flexible repayment tenures"
+    ],
+    "applyLink": "/LenderAPI/moneyView"
   },
   {
     "_id": "z1",
@@ -29,6 +103,23 @@
     "logo": "https://www.getzype.com/wp-content/uploads/2024/09/Zype_svg_black.svg",
     "age": 20,
     "minIncome": 18000,
-    "priority": 4
+    "pincodes": ["125042", "123045", "100001", "125001"],
+    "UTM": "https://zype.onelink.me/vx8a?af_xp=custom&pid=CustomerSource&af_dp=com.zype.mobile%3A%2F%2F&deep_link_value=myZype&af_click_lookback=30d&c=Spiraea",
+    "priority": 5,
+    "approval": "Good",
+    "loanAmount": "Up to ₹3,00,000",
+    "interestRate": "Starting from 1.5% per month",
+    "processingFee": "Starting from 2% to 6% on every loan",
+    "support": "24/7 customer support",
+    "ratings": 4.0,
+    "features": [
+      "Quick disbursement",
+      "Paperless process",
+      "Low processing fee",
+      "Instant approval",
+      "No hidden charges",
+      "24/7 customer support"
+    ],
+    "applyLink": "/LenderAPI/zype"
   }
 ]

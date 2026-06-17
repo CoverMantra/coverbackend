@@ -1,12 +1,12 @@
-﻿# CoverMantra Fullstack Architecture
+# CoverMantra Fullstack Architecture
 
-**Last Updated:** 20 May 2026
+**Last Updated:** 8 June 2026
 
 ## Project Vision
 CoverMantra is a loan aggregator and insurance advisory platform. The fullstack product should provide a polished, responsive web experience while aggregating loan offers from partner lenders in real time.
 
 ## Current Setup
-- `coverbackend/` — Node.js + Express API server with MongoDB
+- `coverbackend/` — Node.js + Express API server with MongoDB (and a fallback local JSON database for lender priority storage: `data/lenders.json`).
 - `coverfrontend/` — Next.js 16 React web application
 
 ## Target Fullstack Architecture
@@ -26,7 +26,7 @@ CoverMantra is a loan aggregator and insurance advisory platform. The fullstack 
    - Authentication and user profile routes
    - Loan search and aggregator endpoints
    - Partner integration triggers
-   - Admin management APIs
+   - Admin management APIs: `/api/lenders/reorder` (PUT), `/api/lenders` (POST/PUT/DELETE) for managing display priority.
 
 3. **Domain Layer**
    - Business rules for eligibility, scoring, normalization
@@ -44,25 +44,33 @@ CoverMantra is a loan aggregator and insurance advisory platform. The fullstack 
    - Secure secret management
 
 ## Key Data Flow
-1. User enters loan details or requests eligibility
-2. Frontend sends request to backend API
-3. Backend validates input and loads lender eligibility
-4. Backend sends parallel requests to partner lender adapters
-5. Responses are normalized and ranked
-6. Aggregated results returned to frontend
-7. User selects offer and continues application
+### Eligibility & Filter Flow
+1. User enters loan details or requests eligibility.
+2. Frontend sends request to backend API (`/api/user/eligibility` or `/api/user/filter-lenders`).
+3. Backend fetches active lenders:
+   - Queries MongoDB collection `lenders` sorted by priority.
+   - If a connection or database permission issue occurs, it safely falls back to the static `lenderList.js`.
+4. Filters lenders based on age, income, and pincode matching criteria.
+5. Returns normalized results to the frontend.
+
+### Admin Priority Reordering Flow
+1. Admin navigates to `/admin/lenders` on frontend.
+2. Drags and drops lenders using `framer-motion` to set desired ordering.
+3. Submits array of reordered IDs with the `Admin Secret Key` (`x-admin-secret` header).
+4. Backend verifies the header secret or user JWT role (`role === 'admin'`).
+5. Backend updates priority values and stores updated list in `coverbackend/data/lenders.json`.
 
 ## Frontend Architecture
-- **Current stack:** Next.js, Tailwind CSS, React Context
+- **Current stack:** Next.js, Tailwind CSS, React Context, Framer Motion (for drag-and-drop), React Toastify
 - **Responsive UI:** breakpoints for mobile/tablet/desktop
-- **Components:** Navbar, Hero, OfferTable, LoginModal, Dashboard, ChatBot, Footer
+- **Components:** Navbar, Hero, OfferTable, LoginModal, Dashboard, ChatBot, Footer, AdminLenderManagement (`/admin/lenders`)
 - **API client:** Axios wrapper with centralized endpoints
 - **Authentication:** OTP flow with cookies and JWT
 
 ## Backend Architecture
-- **Current stack:** Express, MongoDB, Mongoose, Axios
+- **Current stack:** Express, MongoDB, Mongoose, Axios, local JSON fallback storage (`data/lenders.json`)
 - **Proposed stack:** Go, `chi`, `sqlx`, `golang-migrate`, `zap`, OpenTelemetry
-- **Important modules:** `app.js`, `routes/userRoutes.js`, `PartnerRoutes/*`
+- **Important modules:** `app.js`, `routes/userRoutes.js`, `routes/lenderRoutes.js`, `models/Lender.js`, `models/Users.js`, `PartnerRoutes/*`
 
 ## Migration Strategy
 - Keep current repo structure until new Go backend is ready
@@ -76,12 +84,13 @@ CoverMantra is a loan aggregator and insurance advisory platform. The fullstack 
 - Loan comparison tables that adapt to mobile
 - Lender detail pages with rates and fees
 - User dashboard with profile and history
-- Admin panel for lender data and metrics
-- Notifications and error handling in frontend
+- Interactive Admin panel for dynamic lender priority reordering (`framer-motion` list at `/admin/lenders`)
+- Notifications and error handling in frontend using `react-toastify`
 
 ## Security & Compliance
-- OTP security and rate limiting
-- JWT authentication with refresh tokens
+- OTP security and rate limiting (using `express-rate-limit` middleware)
+- JWT authentication with role attributes (`role: 'user' | 'admin'`)
+- Dual-mode admin verification: `x-admin-secret` header token check or admin role JWT claim
 - Secure storage of user PII
 - HTTPS, CORS, input validation, CSRF mitigation
 

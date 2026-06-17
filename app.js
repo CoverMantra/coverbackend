@@ -65,11 +65,32 @@ app.use("/api/fatakPay", fatakPay);
 app.use("/api/zype", zype);
 app.use("/api/vivifi", vivifiRoutes);
 const lenderRoutes = require("./routes/lenderRoutes");
+const partnerRoutes = require("./routes/partnerRoutes");
 app.use("/api/lenders", lenderRoutes);
-connectDb().then(() => {
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+app.use("/api/partners", partnerRoutes);
+
+app.get("/api/health", (req, res) => {
+  const mongoose = require("mongoose");
+  const dbStatus = mongoose.connection.readyState;
+  const dbStatusMap = {
+    0: "disconnected",
+    1: "connected",
+    2: "connecting",
+    3: "disconnecting"
+  };
+  res.json({
+    status: "OK",
+    timestamp: new Date().toISOString(),
+    database: {
+      status: dbStatusMap[dbStatus] || "unknown",
+      readyState: dbStatus
+    }
   });
 });
 
-// Trigger nodemon restart for .env changes (re-trigger 2)
+connectDb();
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+
+// Trigger nodemon restart for .env changes (re-trigger 3)

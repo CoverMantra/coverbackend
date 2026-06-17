@@ -7,7 +7,7 @@ const connectDb = async () => {
     console.log(`Mongo connected: ${conn.connection.host}`);
   } catch (e) {
     console.error("Database connection error:", e.message);
-    process.exit(1);
+    // Do not crash, allow server to run and serve API config/mock routes
   }
 };
 

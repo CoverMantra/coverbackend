@@ -55,6 +55,14 @@ const seedLenders = async () => {
           pincodes: lenderData.pincodes,
           UTM: lenderData.UTM || "",
           priority: i + 1, // Start from 1
+          approval: lenderData.approval,
+          loanAmount: lenderData.loanAmount,
+          interestRate: lenderData.interestRate,
+          processingFee: lenderData.processingFee,
+          support: lenderData.support,
+          ratings: lenderData.ratings,
+          features: lenderData.features,
+          applyLink: lenderData.applyLink,
         });
 
         await newLender.save();

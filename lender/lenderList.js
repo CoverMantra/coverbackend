@@ -1,47 +1,112 @@
 const lenderList = [
-  // { 
-  //   name: "RM", 
-  //   age: 24, 
-  //   pincodes: ["125042", "110011", "500001"], 
-  //   minIncome: 15000 
-    
-  // },
   {
     name: "VIVIFI",
     age: 21,
     pincodes: ["*"],
     minIncome: 15000,
-    UTM: "https://online.flexsalary.com/CustomerLogin/Index?CampaignID=9192300#x"
-},
+    UTM: "https://online.flexsalary.com/CustomerLogin/Index?CampaignID=9192300#x",
+    approval: "Good",
+    loanAmount: "Up to ₹3,00,000",
+    interestRate: "Starting from 1.5% per month",
+    processingFee: "Starting from 2% of the approved loan amount",
+    support: "24/7 customer support",
+    ratings: 4.2,
+    features: [
+      "Credit Line Facility",
+      "Instant Disbursal",
+      "Flexible Repayment",
+      "No Fixed EMI",
+      "Minimal Documentation",
+      "24/7 support"
+    ],
+    applyLink: "/LenderAPI/vivifi"
+  },
   { 
     name: "MV", 
     age: 20, 
     pincodes: ["125042", "125043","125042","125001"], 
     minIncome: 20000,
-    UTM:"https://moneyview.in/personal-loan?utm_source=covermantra" 
+    UTM:"https://moneyview.in/personal-loan?utm_source=covermantra",
+    approval: "Good",
+    loanAmount: "Up to ₹5,00,000",
+    interestRate: "Starting from 1.33% per month",
+    processingFee: "Starting from 2% of the approved loan amount",
+    support: "24/7 customer support",
+    ratings: 4.5,
+    features: [
+      "Direct bank transfer",
+      "Paperless process",
+      "Minimal documentation",
+      "Flexible repayment tenures"
+    ],
+    applyLink: "/LenderAPI/moneyView"
   },
   { 
     name: "Zype", 
     age: 20, 
     pincodes: ["125042", "123045", "100001","125001"], 
     minIncome: 18000,
-    UTM:"https://zype.onelink.me/vx8a?af_xp=custom&pid=CustomerSource&af_dp=com.zype.mobile%3A%2F%2F&deep_link_value=myZype&af_click_lookback=30d&c=Spiraea" 
+    UTM:"https://zype.onelink.me/vx8a?af_xp=custom&pid=CustomerSource&af_dp=com.zype.mobile%3A%2F%2F&deep_link_value=myZype&af_click_lookback=30d&c=Spiraea",
+    approval: "Good",
+    loanAmount: "Up to ₹3,00,000",
+    interestRate: "Starting from 1.5% per month",
+    processingFee: "Starting from 2% to 6% on every loan",
+    support: "24/7 customer support",
+    ratings: 4.0,
+    features: [
+      "Quick disbursement",
+      "Paperless process",
+      "Low processing fee",
+      "Instant approval",
+      "No hidden charges",
+      "24/7 customer support"
+    ],
+    applyLink: "/LenderAPI/zype"
   },
   { 
     name: "FATAKPAY PL", 
     age: 20, 
     pincodes: ["123042", "500001","125042","125001"], 
     minIncome: 16000,
-    UTM:"https://web.fatakpay.com/authentication/login?utm_source=651_TT83W?utm_medium=" 
+    UTM:"https://web.fatakpay.com/authentication/login?utm_source=651_TT83W?utm_medium=",
+    approval: "Good",
+    loanAmount: "Up to ₹2,00,000",
+    interestRate: "Starting from 12% to 35.95% per month",
+    processingFee: "Starting from 2.5% of the approved loan amount",
+    support: "24/7 customer support",
+    ratings: 4.0,
+    features: [
+      "Quick disbursement",
+      "Paperless process",
+      "Low processing fee",
+      "Instant approval",
+      "No hidden charges",
+      "24/7 customer support"
+    ],
+    applyLink: "/LenderAPI/fatakPay"
   },
   { 
     name: "FATAKPAY DCL", 
     age: 20, 
     pincodes: ["123042", "500001","125042","125001"], 
     minIncome: 16000,
-    UTM:"https://web.fatakpay.com/authentication/login?utm_source=651_TT83W?utm_medium=" 
+    UTM:"https://web.fatakpay.com/authentication/login?utm_source=651_TT83W?utm_medium=",
+    approval: "Good",
+    loanAmount: "Up to ₹2,00,000",
+    interestRate: "Starting from 12% to 35.95% per month",
+    processingFee: "Starting from 2.5% of the approved loan amount",
+    support: "24/7 customer support",
+    ratings: 4.0,
+    features: [
+      "Quick disbursement",
+      "Paperless process",
+      "Low processing fee",
+      "Instant approval",
+      "No hidden charges",
+      "24/7 customer support"
+    ],
+    applyLink: "/LenderAPI/fatakPaydcl"
   }
-  
 ];
 
 module.exports = lenderList;
