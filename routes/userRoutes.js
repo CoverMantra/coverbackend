@@ -9,6 +9,12 @@ const authLimiter = rateLimit({
   max: 5,
   message: { message: "Too many requests from this IP, please try again after 15 minutes" }
 });
+
+const contactLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { message: "Too many contact requests from this IP, please try again after 15 minutes" }
+});
 const axios = require("axios");
 const { generateOTP } = require("../utils/otpstore");
 const { generateToken } = require("../utils/jwtgenerate");
@@ -519,28 +525,48 @@ router.post("/filter-lenders", authMiddleware, async (req, res) => {
 
 
 
-router.post("/contact-us", async (req, res) => {
+router.post("/contact-us", contactLimiter, async (req, res) => {
+  let { name, email, message, phone } = req.body;
 
-  const { name, email, message, phone } = req.body;
+  // Trim inputs and convert email to lowercase
+  name = typeof name === "string" ? name.trim() : "";
+  email = typeof email === "string" ? email.trim().toLowerCase() : "";
+  phone = typeof phone === "string" ? phone.trim() : "";
+  message = typeof message === "string" ? message.trim() : "";
 
   // Check mandatory fields
   if (!name || !email || !phone || !message) {
     return res.status(400).json({ message: "All fields are required" });
   }
 
-  // Email & phone validation
-  const emailRegex = /^\S+@\S+\.\S+$/;
-
-  if (!isValidMobileNumber(phone)) {
-    return res.status(400).json({ message: "Invalid phone number" });
+  // Name validation
+  if (name.length < 2 || name.length > 100) {
+    return res.status(400).json({ message: "Name must be between 2 and 100 characters" });
   }
 
+  // Email validation
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   if (!emailRegex.test(email)) {
     return res.status(400).json({ message: "Invalid email format" });
   }
 
+  // Phone validation (Indian mobile number starting with 6-9 and exactly 10 digits)
+  if (!isValidMobileNumber(phone)) {
+    return res.status(400).json({ message: "Invalid phone number. Must be a 10-digit Indian mobile number." });
+  }
+
+  // Message validation
+  if (message.length < 10 || message.length > 1000) {
+    return res.status(400).json({ message: "Message must be between 10 and 1000 characters" });
+  }
+
   try {
-    const newContact = new Contact({ name, email, message, phone });
+    const newContact = new Contact({
+      name,
+      contactEmail: email,
+      contactPhone: phone,
+      message
+    });
     await newContact.save();
 
     res.status(200).json({ message: "Request received successfully" });
