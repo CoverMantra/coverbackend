@@ -300,6 +300,42 @@ router.post("/profile", authMiddleware, async (req, res) => {
 });
 
 
+router.get("/profile", authMiddleware, async (req, res) => {
+  try {
+    const phone = req.user.phone;
+
+    if (!phone) {
+      return res.status(400).json({
+        status: 400,
+        message: "Phone number is required.",
+      });
+    }
+
+    const getUser = await webusername.findOne({ phone });
+
+    if (!getUser) {
+      return res.status(404).json({
+        status: 404,
+        message: "webusername not found.",
+      });
+    }
+
+    return res.status(200).json({
+      status: 200,
+      message: "webusername profile retrieved successfully.",
+      user: getUser,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      status: 500,
+      message: "An internal server error occurred.",
+      error: error.message,
+    });
+  }
+});
+
+
 router.post("/delete-profile", authMiddleware, async (req, res) => {
   try {
     const phone = req.user.phone;
