@@ -72,12 +72,20 @@ CoverMantra is a loan aggregator and insurance advisory platform. The fullstack 
 - **Proposed stack:** Go, `chi`, `sqlx`, `golang-migrate`, `zap`, OpenTelemetry
 - **Important modules:** `app.js`, `routes/userRoutes.js`, `routes/lenderRoutes.js`, `models/Lender.js`, `models/Users.js`, `PartnerRoutes/*`
 
+### Lender API Integration (Adapter Pattern)
+1. **Dynamic Routing:** All partner integrations are mapped dynamically in `routes/partnerRoutes.js` via the `:lenderId` parameter (e.g. `/api/partners/:lenderId/form-config` and `/api/partners/:lenderId/register`).
+2. **Standardized Interfaces (BaseAdapter):** Every lender integration is decoupled from the route code by extending a standard template `BaseAdapter.js`.
+3. **Lender-Specific Adapters:** Specific classes under `adapters/` (such as `MoneyviewAdapter`, `ZypeAdapter`, `VivifiAdapter`, `FatakpayPlAdapter`, and `FatakpayDclAdapter`) handle authentication token retrieval, custom payloads, error handling, and API invocation for their respective partner.
+4. **Adapter Registration:** The adapters are registered as unified key-value exports in `adapters/index.js`, allowing `partnerRoutes` to automatically route incoming requests to the appropriate adapter instance.
+5. **Centralized Lead Logging:** Standardized responses from the adapters are automatically logged into the MongoDB databases (`LenderResponse` and `webusername` collections) by the route handler.
+
 ## Migration Strategy
 - Keep current repo structure until new Go backend is ready
 - Build new backend alongside old one in `coverbackend/`
 - Migrate feature-by-feature: auth, lenders, aggregation, admin
 - Keep frontend API contracts stable during migration
 - Use API gateway or versioned routes if needed
+
 
 ## UI/UX Requirements
 - Loan aggregator homepage with hero search
