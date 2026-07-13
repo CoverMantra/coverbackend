@@ -25,14 +25,15 @@ const userSchema = new mongoose.Schema({
 const deleteRefSchema = new mongoose.Schema({ 
     phone: { type: String, required: true },
     email: { type: String, required: true },
-    message: { type: String, required: true }
+    message: { type: String, required: true },
+    status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' }
 }, { timestamps: true });
 
 // ✅ User model targeting your existing 'webuser' collection
 const webusername = mongoose.model('webusername', userSchema, 'webuser');
 
 // ✅ Alag collection for delete requests (taaki user data corrupt na ho)
-const DeleteRequest = mongoose.model('DeleteAcc', deleteRefSchema, 'account_deletions');
+const DeleteRequest = mongoose.model('DeleteAcc', deleteRefSchema, 'account_deletion');
 
 module.exports = {
     webusername,

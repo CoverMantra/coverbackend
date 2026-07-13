@@ -339,37 +339,46 @@ router.get("/profile", authMiddleware, async (req, res) => {
 router.post("/delete-profile", authMiddleware, async (req, res) => {
   try {
     const phone = req.user.phone;
-    const { message, email } = req.body;
+    const { message, email, phone: bodyPhone } = req.body;
 
-    if (!phone || !email || !message) {
-      return res.status(400).json({ message: "Phone number is required" });
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+    if (!message) {
+      return res.status(400).json({ message: "Message is required" });
+    }
+    if (bodyPhone && bodyPhone !== phone) {
+      return res.status(400).json({ message: "Phone number does not match your logged-in session" });
     }
 
     const deleteUser = await webusername.findOne({ phone });
 
     if (!deleteUser) {
-      return res.status(404).json({ message: "webusername not found" });
+      return res.status(404).json({ message: "User account not found in database" });
+    }
+
+    if (deleteUser.email.toLowerCase() !== email.toLowerCase()) {
+      return res.status(400).json({ message: "Email address does not match your registered email" });
     }
 
     const deleteRequest = new DeleteRequest({
       phone: deleteUser.phone,
       email: email,
       message: message,
+      status: "pending",
     });
 
     await deleteRequest.save();
 
-    await webusername.deleteOne({ phone });
-
     return res.status(200).json({
-      message: "webusername deleted successfully and stored in DeleteRequest",
+      message: "User account deletion request submitted successfully and is pending admin approval",
       deletedUser: deleteUser,
     });
 
   } catch (error) {
     console.error("Delete profile error:", error);
     return res.status(500).json({
-      message: "Server error",
+      message: "Server error during account deletion",
       error: error.message,
     });
   }
