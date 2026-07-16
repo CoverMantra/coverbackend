@@ -347,7 +347,9 @@ router.post("/delete-profile", authMiddleware, async (req, res) => {
     if (!message) {
       return res.status(400).json({ message: "Message is required" });
     }
-    if (bodyPhone && bodyPhone !== phone) {
+    const cleanPhone = (p) => p ? p.replace(/\D/g, "").slice(-10) : "";
+
+    if (bodyPhone && cleanPhone(bodyPhone) !== cleanPhone(phone)) {
       return res.status(400).json({ message: "Phone number does not match your logged-in session" });
     }
 
@@ -357,7 +359,7 @@ router.post("/delete-profile", authMiddleware, async (req, res) => {
       return res.status(404).json({ message: "User account not found in database" });
     }
 
-    if (deleteUser.email.toLowerCase() !== email.toLowerCase()) {
+    if (deleteUser.email.trim().toLowerCase() !== email.trim().toLowerCase()) {
       return res.status(400).json({ message: "Email address does not match your registered email" });
     }
 

@@ -18,7 +18,15 @@ const userSchema = new mongoose.Schema({
         apiResponse: { type: mongoose.Schema.Types.Mixed },
         createdDate: { type: String }
     }],
-    role: { type: String, enum: ['user', 'admin'], default: 'user' }
+    role: { type: String, enum: ['user', 'admin'], default: 'user' },
+    // App and Tracking fields
+    source: { type: String, enum: ['web', 'app'], default: 'web' },
+    isAppUser: { type: Boolean, default: false },
+    fcmToken: { type: String },
+    // Loan Status fields
+    loanStatus: { type: String, enum: ['applied', 'approved', 'rejected', 'disbursed', 'none'], default: 'none' },
+    loanAmount: { type: Number },
+    loanDisbursedDate: { type: Date }
 }, { timestamps: true });
 
 // Delete Request Schema (Recommended: Different Collection)
@@ -29,13 +37,14 @@ const deleteRefSchema = new mongoose.Schema({
     status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' }
 }, { timestamps: true });
 
-// ✅ User model targeting your existing 'webuser' collection
-const webusername = mongoose.model('webusername', userSchema, 'webuser');
+// ✅ Unified User model targeting the 'users' collection
+const User = mongoose.model('User', userSchema, 'users');
 
 // ✅ Alag collection for delete requests (taaki user data corrupt na ho)
 const DeleteRequest = mongoose.model('DeleteAcc', deleteRefSchema, 'account_deletion');
 
 module.exports = {
-    webusername,
+    User,
+    webusername: User, // Export for backward compatibility with existing codebase
     DeleteRequest
 };
