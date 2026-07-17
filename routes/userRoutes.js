@@ -162,6 +162,19 @@ router.post("/send-otp", authLimiter, async (req, res) => {
 
     if (!phone) return res.status(400).json({ message: "Phone required" });
 
+    // Bypass for Google Reviewer / testing dummy number
+    if (phone === "9876543210") {
+      otpStorage.set(phone, {
+        otp: "123456",
+        expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours expiry
+      });
+      console.log("✅ Bypass OTP stored for reviewer: 123456");
+      return res.status(200).json({
+        success: true,
+        message: "OTP process completed (Bypass number)"
+      });
+    }
+
     // 1. Generate Live OTP
     const otp = generateOTP();
 
@@ -230,6 +243,21 @@ router.post("/verify-otp", async (req, res) => {
 
   if (!phone || !otp) {
     return res.status(400).json({ message: "Phone and OTP are required" });
+  }
+
+  if (phone === "9876543210" && otp === "123456") {
+    if (req.body.source === 'app') {
+      try {
+        await webusername.findOneAndUpdate(
+          { phone },
+          { $set: { isAppUser: true } }
+        );
+      } catch (dbErr) {
+        console.error("Error updating app user flag in verify-otp bypass:", dbErr.message);
+      }
+    }
+    const token = generateToken({ phone });
+    return res.json({ success: true, message: "OTP verified successfully (TEST BYPASS)", phone, token });
   }
 
   try {
