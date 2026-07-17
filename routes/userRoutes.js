@@ -141,6 +141,8 @@ router.post("/register", authLimiter, async (req, res) => {
       employment,
       income,
       pincode,
+      source: req.body.source || "web",
+      isAppUser: req.body.source === "app"
     });
     await newUser.save();
     return res
@@ -251,6 +253,23 @@ router.post("/verify-otp", async (req, res) => {
 
     // Delete OTP after successful verification
     otpStorage.delete(phone);
+
+    // If source is 'app', set isAppUser to true and save fcmToken (if provided)
+    if (req.body.source === 'app') {
+      try {
+        await webusername.findOneAndUpdate(
+          { phone },
+          { 
+            $set: { 
+              isAppUser: true,
+              ...(req.body.fcmToken && { fcmToken: req.body.fcmToken })
+            } 
+          }
+        );
+      } catch (dbErr) {
+        console.error("Error updating app user flag in verify-otp:", dbErr.message);
+      }
+    }
 
     const token = generateToken({ phone });
     return res.json({ success: true, message: "OTP verified successfully", phone, token });
