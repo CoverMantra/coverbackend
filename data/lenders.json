@@ -24,7 +24,12 @@
       "Minimal Documentation",
       "24/7 support"
     ],
-    "applyLink": "/LenderAPI/vivifi"
+    "applyLink": "/LenderAPI/vivifi",
+    "loanTypes": [
+      "instant",
+      "personal"
+    ],
+    "isActive": true
   },
   {
     "_id": "m1",
@@ -52,7 +57,11 @@
       "Minimal documentation",
       "Flexible repayment tenures"
     ],
-    "applyLink": "/LenderAPI/moneyView"
+    "applyLink": "/LenderAPI/moneyView",
+    "loanTypes": [
+      "personal"
+    ],
+    "isActive": false
   },
   {
     "_id": "f1",
@@ -82,7 +91,11 @@
       "No hidden charges",
       "24/7 customer support"
     ],
-    "applyLink": "/LenderAPI/fatakPay"
+    "applyLink": "/LenderAPI/fatakPay",
+    "loanTypes": [
+      "personal"
+    ],
+    "isActive": true
   },
   {
     "_id": "f2",
@@ -112,7 +125,12 @@
       "No hidden charges",
       "24/7 customer support"
     ],
-    "applyLink": "/LenderAPI/fatakPaydcl"
+    "applyLink": "/LenderAPI/fatakPaydcl",
+    "loanTypes": [
+      "instant",
+      "short_term"
+    ],
+    "isActive": true
   },
   {
     "_id": "z1",
@@ -142,6 +160,11 @@
       "No hidden charges",
       "24/7 customer support"
     ],
-    "applyLink": "/LenderAPI/zype"
+    "applyLink": "/LenderAPI/zype",
+    "loanTypes": [
+      "instant",
+      "personal"
+    ],
+    "isActive": false
   }
 ]

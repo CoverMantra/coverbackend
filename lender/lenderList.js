@@ -19,7 +19,9 @@ const lenderList = [
       "Minimal Documentation",
       "24/7 support"
     ],
-    applyLink: "/LenderAPI/vivifi"
+    applyLink: "/LenderAPI/vivifi",
+    loanTypes: ["instant", "personal"],
+    isActive: true
   },
   { 
     name: "MV", 
@@ -39,7 +41,9 @@ const lenderList = [
       "Minimal documentation",
       "Flexible repayment tenures"
     ],
-    applyLink: "/LenderAPI/moneyView"
+    applyLink: "/LenderAPI/moneyView",
+    loanTypes: ["personal"],
+    isActive: false
   },
   { 
     name: "Zype", 
@@ -61,7 +65,9 @@ const lenderList = [
       "No hidden charges",
       "24/7 customer support"
     ],
-    applyLink: "/LenderAPI/zype"
+    applyLink: "/LenderAPI/zype",
+    loanTypes: ["instant", "personal"],
+    isActive: false
   },
   { 
     name: "FATAKPAY PL", 
@@ -83,7 +89,9 @@ const lenderList = [
       "No hidden charges",
       "24/7 customer support"
     ],
-    applyLink: "/LenderAPI/fatakPay"
+    applyLink: "/LenderAPI/fatakPay",
+    loanTypes: ["personal"],
+    isActive: true
   },
   { 
     name: "FATAKPAY DCL", 
@@ -105,7 +113,9 @@ const lenderList = [
       "No hidden charges",
       "24/7 customer support"
     ],
-    applyLink: "/LenderAPI/fatakPaydcl"
+    applyLink: "/LenderAPI/fatakPaydcl",
+    loanTypes: ["instant", "short_term"],
+    isActive: true
   }
 ];
 

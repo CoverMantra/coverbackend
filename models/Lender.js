@@ -16,7 +16,9 @@ const lenderSchema = new mongoose.Schema({
     support: { type: String, default: "24/7 customer support" },
     ratings: { type: Number, default: 4.0 },
     features: { type: [String], default: [] },
-    applyLink: { type: String, default: "" }
+    applyLink: { type: String, default: "" },
+    loanTypes: { type: [String], default: [] },
+    isActive: { type: Boolean, default: true }
 }, { timestamps: true });
 
 const Lender = mongoose.model('Lender', lenderSchema);

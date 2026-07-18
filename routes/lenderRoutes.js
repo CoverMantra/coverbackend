@@ -33,12 +33,26 @@ const writeLenders = (lenders) => {
 // =======================
 
 // @route   GET /api/lenders
-// @desc    Get all lenders sorted by priority
+// @desc    Get all lenders sorted by priority (optional filtering by loanType / category)
 // @access  Public
 router.get("/", async (req, res) => {
   try {
-    const lenders = readLenders();
+    const rawLenders = readLenders();
+    // Filter out inactive lenders
+    const lenders = rawLenders.filter(l => l.isActive !== false);
+    
     lenders.sort((a, b) => a.priority - b.priority);
+    
+    const filterVal = req.query.loanType || req.query.category;
+    if (filterVal) {
+      const filtered = lenders.filter(l => 
+        l.loanTypes && 
+        Array.isArray(l.loanTypes) && 
+        l.loanTypes.some(type => type.toLowerCase() === filterVal.toLowerCase())
+      );
+      return res.json(filtered);
+    }
+    
     res.json(lenders);
   } catch (error) {
     console.error("Error fetching lenders:", error);
