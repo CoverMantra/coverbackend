@@ -62,13 +62,14 @@ router.post("/eligibility", async (req, res) => {
     console.error("MongoDB Lender fetch failed, falling back to static list:", dbError.message);
   }
 
-  // Filter lenders based on age, income, and pincode
+  // Filter lenders based on age, income, pincode, and active status
   const eligibleLenders = activeLenders.filter((lender) => {
     const ageMatch = age >= lender.age;
     const incomeMatch = income >= lender.minIncome;
     const pincodeMatch = lender.pincodes.includes("*") || lender.pincodes.includes(pincode);
+    const activeMatch = lender.isActive !== false;
 
-    return ageMatch && incomeMatch && pincodeMatch;
+    return ageMatch && incomeMatch && pincodeMatch && activeMatch;
   });
 
   if (eligibleLenders.length === 0) {
