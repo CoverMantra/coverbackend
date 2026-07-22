@@ -66,8 +66,13 @@ app.use("/api/zype", zype);
 app.use("/api/vivifi", vivifiRoutes);
 const lenderRoutes = require("./routes/lenderRoutes");
 const partnerRoutes = require("./routes/partnerRoutes");
+const adminRoutes = require("./routes/adminRoutes");
+const webhookRoutes = require("./routes/webhookRoutes");
+
 app.use("/api/lenders", lenderRoutes);
 app.use("/api/partners", partnerRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/webhooks", webhookRoutes);
 
 app.get("/api/health", (req, res) => {
   const mongoose = require("mongoose");

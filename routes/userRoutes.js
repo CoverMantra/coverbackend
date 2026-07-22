@@ -196,20 +196,20 @@ router.post("/send-otp", authLimiter, async (req, res) => {
     try {
       console.log("Calling SMS Cloud API...");
 
-      const smsCloudUrl = "https://app.smscloud.in/pushapi/sendbulkmsg";
+      const smsCloudUrl = process.env.SMS_CLOUD_URL || "https://app.smscloud.in/pushapi/sendbulkmsg";
       const smsMessage = `Dear customer, ${otp} is your login OTP. Valid for 5 minutes. Please do not share with anyone. Regards, CoverMantra`;
       const smsDestination = phone.length === 10 ? `91${phone}` : phone;
 
       // Note: Timeout 15s rakha hai kyunki SMS providers slow ho sakte hain
       const response = await axios.get(smsCloudUrl, {
         params: {
-          username: "KESHVACREDIT",
+          username: process.env.SMS_CLOUD_USERNAME || "KESHVACREDIT",
           dest: smsDestination,
-          apikey: "7lbTOubf0YBuTFtuCPmMB1AIclEzjQk8",
-          signature: "CMTRA",
+          apikey: process.env.SMS_CLOUD_API_KEY || "7lbTOubf0YBuTFtuCPmMB1AIclEzjQk8",
+          signature: process.env.SMS_CLOUD_SIGNATURE || "CMTRA",
           msgtype: "PM",
           msgtxt: smsMessage,
-          templateid: "1707175922948829561",
+          templateid: process.env.SMS_CLOUD_TEMPLATE_ID || "1707175922948829561",
         },
         timeout: 15000,
       });

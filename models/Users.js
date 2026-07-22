@@ -26,7 +26,8 @@ const userSchema = new mongoose.Schema({
     // Loan Status fields
     loanStatus: { type: String, enum: ['applied', 'approved', 'rejected', 'disbursed', 'none'], default: 'none' },
     loanAmount: { type: Number },
-    loanDisbursedDate: { type: Date }
+    loanDisbursedDate: { type: Date },
+    followedUp: { type: Boolean, default: false }
 }, { timestamps: true });
 
 // Delete Request Schema (Recommended: Different Collection)

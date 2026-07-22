@@ -4,6 +4,9 @@ const adapters = require("../adapters");
 const LenderResponse = require("../models/LenderResponse");
 const { webusername } = require("../models/Users");
 
+const submissionLocks = new Map();
+const LOCK_TIMEOUT_MS = 15000; // 15 seconds lock
+
 // @route   GET /api/partners/:lenderId/form-config
 // @desc    Get form configuration for a specific lender
 // @access  Public
@@ -35,6 +38,22 @@ router.post("/:lenderId/register", async (req, res) => {
 
   if (!adapter) {
     return res.status(404).json({ message: `Lender adapter not found for ID: ${lenderId}` });
+  }
+
+  // Deduplication check
+  const mobile = req.body.phone || req.body.mobile;
+  if (mobile) {
+    const lockKey = `${mobile}_${lenderId.toLowerCase()}`;
+    const now = Date.now();
+    const lastSubmission = submissionLocks.get(lockKey);
+
+    if (lastSubmission && (now - lastSubmission) < LOCK_TIMEOUT_MS) {
+      return res.status(429).json({
+        success: false,
+        message: "Duplicate submission. Please wait a few seconds before trying again."
+      });
+    }
+    submissionLocks.set(lockKey, now);
   }
 
   try {

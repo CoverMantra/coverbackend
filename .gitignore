@@ -7,8 +7,6 @@ yarn-error.log*
 dist/
 build/
 coverage/
-BACKEND_ARCHITECTURE.md
-implimentation_plan.md
-architeecturefullstack.md
-implimentation_plan1.md
-frontend_Architecture.md
+# Ignore all markdown files except README
+*.md
+!README.md

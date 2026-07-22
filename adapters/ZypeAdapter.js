@@ -49,8 +49,9 @@ class ZypeAdapter extends BaseAdapter {
 
     // Call Dedupe API
     try {
+      const eligibilityUrl = process.env.ZYPE_ELIGIBILITY_URL || "https://prod.zype.co.in/attribution-service/api/v1/underwriting/customerEligibility";
       const dedupeRes = await axios.post(
-        "https://prod.zype.co.in/attribution-service/api/v1/underwriting/customerEligibility",
+        eligibilityUrl,
         dedupePayload,
         { headers: { "Content-Type": "application/json" } }
       );
@@ -73,8 +74,9 @@ class ZypeAdapter extends BaseAdapter {
 
     // Call PreApproval API
     try {
+      const preapprovalUrl = process.env.ZYPE_PREAPPROVAL_URL || "https://prod.zype.co.in/attribution-service/api/v1/underwriting/preApprovalOffer";
       const apiRes = await axios.post(
-        "https://prod.zype.co.in/attribution-service/api/v1/underwriting/preApprovalOffer",
+        preapprovalUrl,
         payloadrequest,
         { headers: { "Content-Type": "application/json" } }
       );

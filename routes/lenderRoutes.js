@@ -1,7 +1,6 @@
 const express = require("express");
 const router = express.Router();
-// const Lender = require("../models/Lender"); // Bypassed due to permissions
-const authMiddleware = require("../middlewares/authMiddleware");
+const combinedAdminAuth = require("../middlewares/adminAuthMiddleware");
 const fs = require('fs');
 const path = require('path');
 
@@ -64,24 +63,7 @@ router.get("/", async (req, res) => {
 // ADMIN ROUTES
 // =======================
 
-// Admin Auth Middleware (Checks if user role is admin OR if secret is provided)
-const combinedAdminAuth = (req, res, next) => {
-  // TEMPORARY BYPASS: allow bypass via a special header for initial setup
-  const secret = req.headers['x-admin-secret'];
-  if (secret && secret === process.env.ADMIN_SECRET) {
-    return next();
-  }
 
-  // Otherwise, require valid JWT token
-  authMiddleware(req, res, () => {
-    // Check if the authenticated user has admin role
-    if (req.user && req.user.role === 'admin') {
-      next();
-    } else {
-      res.status(403).json({ message: "Access denied. Admin only." });
-    }
-  });
-};
 
 // @route   PUT /api/lenders/reorder
 // @desc    Reorder lenders priority
