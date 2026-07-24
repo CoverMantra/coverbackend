@@ -19,9 +19,7 @@ router.get("/leads", combinedAdminAuth, async (req, res) => {
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: "i" } },
-        { phone: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } },
-        { pan: { $regex: search, $options: "i" } }
+        { phone: { $regex: search, $options: "i" } }
       ];
     }
 
@@ -35,6 +33,7 @@ router.get("/leads", combinedAdminAuth, async (req, res) => {
 
     const totalLeads = await User.countDocuments(query);
     const leads = await User.find(query)
+      .select("-pan -email -income -employment -dob -pincode")
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit);
@@ -68,6 +67,7 @@ router.get("/deletions", combinedAdminAuth, async (req, res) => {
 
     const totalRequests = await DeleteRequest.countDocuments(query);
     const requests = await DeleteRequest.find(query)
+      .select("-email")
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit);

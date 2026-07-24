@@ -71,7 +71,7 @@ const webhookRoutes = require("./routes/webhookRoutes");
 
 app.use("/api/lenders", lenderRoutes);
 app.use("/api/partners", partnerRoutes);
-app.use("/api/admin", adminRoutes);
+app.use("/api/auth-gate-70898", adminRoutes);
 app.use("/api/webhooks", webhookRoutes);
 
 app.get("/api/health", (req, res) => {
