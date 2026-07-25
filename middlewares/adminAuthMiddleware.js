@@ -10,7 +10,7 @@ const combinedAdminAuth = (req, res, next) => {
   const cleanSecret = sanitizeSecret(secret);
   const expectedSecret = sanitizeSecret(process.env.ADMIN_SECRET);
 
-  console.log(`[Admin Auth Check] Path: ${req.originalUrl}, Clean Secret: "${cleanSecret}", Clean Expected: "${expectedSecret}"`);
+  console.log(`[Admin Auth Check] Path: ${req.originalUrl}, Auth Header Present: ${!!secret}`);
 
   if (cleanSecret && cleanSecret === expectedSecret) {
     return next();

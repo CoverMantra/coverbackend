@@ -3,6 +3,7 @@ const router = express.Router();
 const adapters = require("../adapters");
 const LenderResponse = require("../models/LenderResponse");
 const { webusername } = require("../models/Users");
+const authMiddleware = require("../middlewares/authMiddleware");
 
 const submissionLocks = new Map();
 const LOCK_TIMEOUT_MS = 15000; // 15 seconds lock
@@ -30,8 +31,8 @@ router.get("/:lenderId/form-config", (req, res) => {
 
 // @route   POST /api/partners/:lenderId/register
 // @desc    Register a lead with a specific lender and save standardized log
-// @access  Public
-router.post("/:lenderId/register", async (req, res) => {
+// @access  Private
+router.post("/:lenderId/register", authMiddleware, async (req, res) => {
   const { lenderId } = req.params;
   const adapterKey = Object.keys(adapters).find(k => k.toLowerCase() === lenderId.toLowerCase());
   const adapter = adapters[adapterKey];
@@ -40,20 +41,33 @@ router.post("/:lenderId/register", async (req, res) => {
     return res.status(404).json({ message: `Lender adapter not found for ID: ${lenderId}` });
   }
 
-  // Deduplication check
   const mobile = req.body.phone || req.body.mobile;
+
+  // Verify authorization: check if logged-in user phone matches input mobile number
+  if (!mobile || String(mobile) !== String(req.user.phone)) {
+    return res.status(403).json({
+      success: false,
+      message: "Forbidden: You are not authorized to register a lead for this phone number."
+    });
+  }
+
+  // Deduplication check
   if (mobile) {
     const lockKey = `${mobile}_${lenderId.toLowerCase()}`;
     const now = Date.now();
-    const lastSubmission = submissionLocks.get(lockKey);
 
-    if (lastSubmission && (now - lastSubmission) < LOCK_TIMEOUT_MS) {
+    if (submissionLocks.has(lockKey)) {
       return res.status(429).json({
         success: false,
         message: "Duplicate submission. Please wait a few seconds before trying again."
       });
     }
     submissionLocks.set(lockKey, now);
+
+    // Automatically delete lock key to prevent memory leak
+    setTimeout(() => {
+      submissionLocks.delete(lockKey);
+    }, LOCK_TIMEOUT_MS);
   }
 
   try {

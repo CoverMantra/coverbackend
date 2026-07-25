@@ -10,6 +10,29 @@ function sanitizePhone(phone) {
   return digits.length > 10 ? digits.slice(-10) : digits;
 }
 
+// Escape regular expression special characters to prevent ReDoS attacks
+function escapeRegex(string) {
+  return string.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+}
+
+// Middleware to verify webhook token signature
+const verifyWebhookToken = (req, res, next) => {
+  const incomingToken = req.headers['x-webhook-token'];
+  const expectedToken = process.env.WEBHOOK_SECRET;
+
+  if (!expectedToken) {
+    console.warn("[Webhook Security Warning] WEBHOOK_SECRET is not configured in environment variables!");
+    return res.status(500).json({ success: false, message: "Webhook secret is not configured on server" });
+  }
+
+  if (!incomingToken || incomingToken !== expectedToken) {
+    console.warn(`[Webhook Security Auth Failed] Path: ${req.originalUrl}, Remote IP: ${req.ip}`);
+    return res.status(401).json({ success: false, message: "Unauthorized webhook request: Invalid x-webhook-token" });
+  }
+
+  next();
+};
+
 // Unified Helper to process a webhook payload and update MongoDB
 const processLenderWebhook = async (lenderName, payload, req, res) => {
   const { phone, mobile, phoneNumber, mobileNumber, status, loanStatus, stage, amount, loanAmount, approvedAmount } = payload;
@@ -43,8 +66,8 @@ const processLenderWebhook = async (lenderName, payload, req, res) => {
     const yyyy = today.getFullYear();
     const createdDate = `${dd}/${mm}/${yyyy}`;
 
-    // 1. Update User Document matching phone suffix
-    const user = await User.findOne({ phone: new RegExp(phone10 + "$") });
+    // 1. Update User Document matching phone suffix (regex escaped to prevent ReDoS)
+    const user = await User.findOne({ phone: new RegExp(escapeRegex(phone10) + "$") });
     if (user) {
       user.loanStatus = mappedStatus;
       if (rawAmount) {
@@ -101,25 +124,25 @@ const processLenderWebhook = async (lenderName, payload, req, res) => {
 
 // @route   POST /api/webhooks/zype
 // @desc    Webhook postback for Zype Loan status updates
-router.post("/zype", async (req, res) => {
+router.post("/zype", verifyWebhookToken, async (req, res) => {
   await processLenderWebhook("ZYPE LOAN", req.body, req, res);
 });
 
 // @route   POST /api/webhooks/moneyview
 // @desc    Webhook postback for Moneyview Loan status updates
-router.post("/moneyview", async (req, res) => {
+router.post("/moneyview", verifyWebhookToken, async (req, res) => {
   await processLenderWebhook("MONEYVIEW LOAN", req.body, req, res);
 });
 
 // @route   POST /api/webhooks/vivifi
 // @desc    Webhook postback for Vivifi Loan status updates
-router.post("/vivifi", async (req, res) => {
+router.post("/vivifi", verifyWebhookToken, async (req, res) => {
   await processLenderWebhook("VIVIFI LOAN", req.body, req, res);
 });
 
 // @route   POST /api/webhooks/fatakpay
 // @desc    Webhook postback for Fatakpay Loan status updates
-router.post("/fatakpay", async (req, res) => {
+router.post("/fatakpay", verifyWebhookToken, async (req, res) => {
   await processLenderWebhook("FATAKPAY PL", req.body, req, res);
 });
 

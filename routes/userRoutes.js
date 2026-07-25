@@ -163,8 +163,8 @@ router.post("/send-otp", authLimiter, async (req, res) => {
 
     if (!phone) return res.status(400).json({ message: "Phone required" });
 
-    // Bypass for Google Reviewer / testing dummy number
-    if (phone === "9876543210") {
+    // Bypass for Google Reviewer / testing dummy number (Controlled via ALLOW_TEST_BYPASS in .env)
+    if (process.env.ALLOW_TEST_BYPASS === "true" && phone === "9876543210") {
       otpStorage.set(phone, {
         otp: "123456",
         expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours expiry
@@ -205,7 +205,7 @@ router.post("/send-otp", authLimiter, async (req, res) => {
         params: {
           username: process.env.SMS_CLOUD_USERNAME || "KESHVACREDIT",
           dest: smsDestination,
-          apikey: process.env.SMS_CLOUD_API_KEY || "7lbTOubf0YBuTFtuCPmMB1AIclEzjQk8",
+          apikey: process.env.SMS_CLOUD_API_KEY,
           signature: process.env.SMS_CLOUD_SIGNATURE || "CMTRA",
           msgtype: "PM",
           msgtxt: smsMessage,
@@ -239,14 +239,14 @@ router.post("/send-otp", authLimiter, async (req, res) => {
 });
 
 
-router.post("/verify-otp", async (req, res) => {
+router.post("/verify-otp", authLimiter, async (req, res) => {
   const { phone, otp } = req.body;
 
   if (!phone || !otp) {
     return res.status(400).json({ message: "Phone and OTP are required" });
   }
 
-  if (phone === "9876543210" && otp === "123456") {
+  if (process.env.ALLOW_TEST_BYPASS === "true" && phone === "9876543210" && otp === "123456") {
     if (req.body.source === 'app') {
       try {
         await webusername.findOneAndUpdate(

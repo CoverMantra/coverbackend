@@ -2,6 +2,7 @@ require("dotenv").config(); // loads .env at startup
 const express = require("express");
 const cors = require("cors");
 const connectDb = require("./config/db");
+const authMiddleware = require("./middlewares/authMiddleware");
 const userRoutes = require("./routes/userRoutes");
 const insurence = require("./insurence/insurences");
 const moneyview = require("./PartnerRoutes/moneyview/moneyview");
@@ -57,22 +58,21 @@ app.use("/api/user", userRoutes);
 // app.use("/api/zype",zype);
 // app.use("/api/smartcoin",smartcoin);
 // app.use("/api/moneyview",moneyview);
-// app.use("/api/chintamoney",chintamoney);
 // app.use("/api/lenden",lenden);
 app.use("/api/insurence", insurence);
-app.use("/api/moneyview", moneyview);
-app.use("/api/fatakPay", fatakPay);
-app.use("/api/zype", zype);
-app.use("/api/vivifi", vivifiRoutes);
+app.use("/api/moneyview", authMiddleware, moneyview);
+app.use("/api/fatakPay", authMiddleware, fatakPay);
+app.use("/api/zype", authMiddleware, zype);
+app.use("/api/vivifi", authMiddleware, vivifiRoutes);
 const lenderRoutes = require("./routes/lenderRoutes");
 const partnerRoutes = require("./routes/partnerRoutes");
 const adminRoutes = require("./routes/adminRoutes");
-const webhookRoutes = require("./routes/webhookRoutes");
+// const webhookRoutes = require("./routes/webhookRoutes");
 
 app.use("/api/lenders", lenderRoutes);
 app.use("/api/partners", partnerRoutes);
 app.use("/api/auth-gate-70898", adminRoutes);
-app.use("/api/webhooks", webhookRoutes);
+// app.use("/api/webhooks", webhookRoutes);
 
 app.get("/api/health", (req, res) => {
   const mongoose = require("mongoose");
