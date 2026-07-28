@@ -1,7 +1,22 @@
 const express = require("express");
+const rateLimit = require("express-rate-limit");
 const router = express.Router();
 const { User, DeleteRequest } = require("../models/Users");
 const combinedAdminAuth = require("../middlewares/adminAuthMiddleware");
+
+// Prevent brute-force attacks on admin routes
+const adminRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per window
+  message: {
+    success: false,
+    message: "Too many admin requests from this IP, please try again after 15 minutes."
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+router.use(adminRateLimiter);
 
 // @route   GET /api/admin/leads
 // @desc    Get all leads (users) with pagination, search, and filtering
@@ -9,10 +24,15 @@ const combinedAdminAuth = require("../middlewares/adminAuthMiddleware");
 router.get("/leads", combinedAdminAuth, async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
+    const limitQuery = req.query.limit;
+    const isExport = limitQuery === "all";
+    const limit = isExport ? null : (parseInt(limitQuery) || 20);
+
     const search = req.query.search || "";
     const status = req.query.status || "";
     const lender = req.query.lender || "";
+    const startDate = req.query.startDate;
+    const endDate = req.query.endDate;
 
     const query = {};
 
@@ -31,18 +51,30 @@ router.get("/leads", combinedAdminAuth, async (req, res) => {
       query["lenderResponses.lenderName"] = { $regex: lender, $options: "i" };
     }
 
+    // Filter by createdAt date range
+    if (startDate || endDate) {
+      query.createdAt = {};
+      if (startDate) query.createdAt.$gte = new Date(new Date(startDate).setHours(0, 0, 0, 0));
+      if (endDate) query.createdAt.$lte = new Date(new Date(endDate).setHours(23, 59, 59, 999));
+    }
+
     const totalLeads = await User.countDocuments(query);
-    const leads = await User.find(query)
+    
+    let leadsQuery = User.find(query)
       .select("-pan -email -income -employment -dob -pincode")
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(limit);
+      .sort({ createdAt: -1 });
+
+    if (!isExport) {
+      leadsQuery = leadsQuery.skip((page - 1) * limit).limit(limit);
+    }
+    
+    const leads = await leadsQuery;
 
     res.json({
       success: true,
       total: totalLeads,
       page,
-      pages: Math.ceil(totalLeads / limit),
+      pages: isExport ? 1 : Math.ceil(totalLeads / limit),
       leads
     });
   } catch (error) {
