@@ -7,13 +7,13 @@ const rateLimit = require("express-rate-limit");
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
-  message: { message: "Too many requests from this IP, please try again after 15 minutes" }
+  message: { message: "You have requested too many OTPs. Please try again after 15 minutes for security reasons." }
 });
 
 const contactLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
-  message: { message: "Too many contact requests from this IP, please try again after 15 minutes" }
+  message: { message: "Too many contact requests. Please try again after 15 minutes." }
 });
 const axios = require("axios");
 const { generateOTP } = require("../utils/otpstore");
