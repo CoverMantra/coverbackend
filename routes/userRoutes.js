@@ -99,6 +99,8 @@ router.post("/register", authLimiter, async (req, res) => {
     employment,
     income,
     pincode,
+    consent,
+    consentMessage,
   } = req.body;
 
   if (
@@ -143,7 +145,9 @@ router.post("/register", authLimiter, async (req, res) => {
       income,
       pincode,
       source: req.body.source || "web",
-      isAppUser: req.body.source === "app"
+      isAppUser: req.body.source === "app",
+      consent: consent !== undefined ? consent : true,
+      consentMessage: consentMessage || "I agree to the Terms & Conditions and Privacy Policy."
     });
     await newUser.save();
     return res
