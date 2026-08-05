@@ -48,15 +48,15 @@ router.post("/life-insurence/:type",async (req,res)=>{
 
 })
 
-router.post("/travel-insurence",async (req,res)=>{
-
-})
-router.post("/home-insurence",async (req,res)=>{
-
-})
-router.post("/health-insurence",async (req,res)=>{
-  
-})
+router.post("/travel-insurence", async (req, res) => {
+  return res.status(501).json({ message: "Not Implemented" });
+});
+router.post("/home-insurence", async (req, res) => {
+  return res.status(501).json({ message: "Not Implemented" });
+});
+router.post("/health-insurence", async (req, res) => {
+  return res.status(501).json({ message: "Not Implemented" });
+});
 
 
 

@@ -36,6 +36,11 @@ function isValidMobileNumber(number) {
   return mobileRegex.test(number);
 }
 
+function isValidEmail(email) {
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  return emailRegex.test(email);
+}
+
 router.get("/", (req, res) => {
   res.send("hello alive");
 });
@@ -86,7 +91,7 @@ router.post("/eligibility", async (req, res) => {
   });
 });
 
-router.post("/register", authLimiter, async (req, res) => {
+router.post("/register", async (req, res) => {
   const {
     name,
     phone,
@@ -127,11 +132,21 @@ router.post("/register", authLimiter, async (req, res) => {
     return res.status(400).json({ message: "Pan is not valid " })
   }
 
+  if (!isValidEmail(email)) {
+    return res.status(400).json({ message: "Email is not valid" })
+  }
+
   try {
-    const existingUser = await webusername.findOne({ $or: [{ email }, { phone }] });
-    if (existingUser) {
-      return res.status(400).send("User with this email or phone already exists. Please sign in.");
+    const existingPhone = await webusername.findOne({ phone });
+    if (existingPhone) {
+      return res.status(400).send("Mobile number is already registered. Please sign in.");
     }
+
+    const existingEmail = await webusername.findOne({ email });
+    if (existingEmail) {
+      return res.status(400).send("Email address is already registered. Please sign in.");
+    }
+
     const newUser = new webusername({
       name,
       phone,
@@ -154,9 +169,10 @@ router.post("/register", authLimiter, async (req, res) => {
       .status(201)
       .json({ message: "webusername registered successfully", user: newUser });
   } catch (err) {
+    console.error("Register error:", err);
     return res
       .status(500)
-      .json({ message: "Server error", error: err.message });
+      .json({ message: "Server error" });
   }
 });
 router.post("/send-otp", authLimiter, async (req, res) => {
@@ -236,8 +252,7 @@ router.post("/send-otp", authLimiter, async (req, res) => {
     console.error("🔥 CRITICAL SERVER ERROR:", globalError.stack);
     return res.status(500).json({
       success: false,
-      message: "Internal Server Error",
-      error: globalError.message
+      message: "Internal Server Error"
     });
   }
 });
@@ -346,7 +361,6 @@ router.post("/profile", authMiddleware, async (req, res) => {
     return res.status(500).json({
       status: 500,
       message: "An internal server error occurred.",
-      error: error.message,
     });
   }
 });
@@ -382,7 +396,6 @@ router.get("/profile", authMiddleware, async (req, res) => {
     return res.status(500).json({
       status: 500,
       message: "An internal server error occurred.",
-      error: error.message,
     });
   }
 });
@@ -391,7 +404,12 @@ router.get("/profile", authMiddleware, async (req, res) => {
 router.post("/delete-profile", authMiddleware, async (req, res) => {
   try {
     const phone = req.user.phone;
-    const { message, email, phone: bodyPhone } = req.body;
+    let { message, email, phone: bodyPhone } = req.body;
+
+    // Sanitize inputs to prevent crashes
+    email = typeof email === "string" ? email.trim() : "";
+    message = typeof message === "string" ? message.trim() : "";
+    bodyPhone = typeof bodyPhone === "string" ? bodyPhone.trim() : "";
 
     if (!email) {
       return res.status(400).json({ message: "Email is required" });
@@ -399,7 +417,7 @@ router.post("/delete-profile", authMiddleware, async (req, res) => {
     if (!message) {
       return res.status(400).json({ message: "Message is required" });
     }
-    const cleanPhone = (p) => p ? p.replace(/\D/g, "").slice(-10) : "";
+    const cleanPhone = (p) => p ? String(p).replace(/\D/g, "").slice(-10) : "";
 
     if (bodyPhone && cleanPhone(bodyPhone) !== cleanPhone(phone)) {
       return res.status(400).json({ message: "Phone number does not match your logged-in session" });
@@ -411,7 +429,7 @@ router.post("/delete-profile", authMiddleware, async (req, res) => {
       return res.status(404).json({ message: "User account not found in database" });
     }
 
-    if (deleteUser.email.trim().toLowerCase() !== email.trim().toLowerCase()) {
+    if (deleteUser.email.trim().toLowerCase() !== email.toLowerCase()) {
       return res.status(400).json({ message: "Email address does not match your registered email" });
     }
 
@@ -432,8 +450,7 @@ router.post("/delete-profile", authMiddleware, async (req, res) => {
   } catch (error) {
     console.error("Delete profile error:", error);
     return res.status(500).json({
-      message: "Server error during account deletion",
-      error: error.message,
+      message: "Server error during account deletion"
     });
   }
 });
@@ -474,9 +491,10 @@ router.put("/update-profile", authMiddleware, async (req, res) => {
       .status(200)
       .json({ message: "webusername update sucessfully", updatedUser });
   } catch (error) {
+    console.error("Update profile error:", error);
     return res
       .status(500)
-      .json({ message: "Server error", error: error.message });
+      .json({ message: "Server error" });
   }
 });
 
@@ -564,11 +582,10 @@ router.post("/filter-lenders", authMiddleware, async (req, res) => {
     });
 
   } catch (error) {
-    console.error(error);
+    console.error("Filter lenders error:", error);
     return res.status(500).json({
       status: 500,
       message: "An internal server error occurred.",
-      error: error.message,
     });
   }
 });

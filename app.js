@@ -1,6 +1,7 @@
 require("dotenv").config(); // loads .env at startup
 const express = require("express");
 const cors = require("cors");
+const helmet = require("helmet");
 const connectDb = require("./config/db");
 const authMiddleware = require("./middlewares/authMiddleware");
 const userRoutes = require("./routes/userRoutes");
@@ -12,6 +13,14 @@ const vivifiRoutes = require("./PartnerRoutes/vivifi/vivifi");
 const { webusername } = require("./models/Users");
 const LenderResponse = require("./models/LenderResponse");
 const app = express();
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginEmbedderPolicy: false,
+  })
+);
+
 const PORT = process.env.PORT || 5001;
 
 // Safety guard: user profiles and lender responses must never share a collection.
@@ -28,7 +37,6 @@ if (webusername.collection.name === LenderResponse.collection.name) {
         const allowedOrigins = [
           "https://covermantra.com",
           "https://www.covermantra.com",
-          "covermantra.com",
           "http://localhost:3000",
           "http://localhost:3001",
           "http://localhost:5000", 
